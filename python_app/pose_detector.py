@@ -55,7 +55,7 @@ def get_point(landmarks, index):
 
 
 # ── Helper: check if a landmark is visible enough to trust ───────────────────
-def is_visible(landmarks, index, threshold=0.5):
+def is_visible(landmarks, index, threshold=0.3):
     return landmarks[index].visibility > threshold
 
 
