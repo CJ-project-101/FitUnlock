@@ -202,39 +202,30 @@ class FitPlayApp:
         # Update today's statistics
         self._refresh_stats()
 
-
         # ----------------------------------------------------
         # NORMAL MODE / RESUME MODE
         # ----------------------------------------------------
 
         if self.on_unlock_callback:
 
-            messagebox.showinfo(
-                "Unlocked!",
-                f"You earned {minutes_earned} minutes!\n\n"
-                f"Switching to game..."
+            # Non-blocking status update instead of messagebox —
+            # a modal popup halts Python until clicked, which was
+            # delaying launch_game() from running until the user
+            # manually clicked OK. This shows the same message
+            # instantly without pausing execution.
+            self._set_status(
+                f"✅ Unlocked! You earned {minutes_earned} minutes. Switching to game...",
+                SUCCESS
             )
+            self.root.update_idletasks()  # force the label to actually repaint before continuing
 
-            # Important:
-            #
-            # NORMAL MODE:
-            #   launch_game() starts Unity if it isn't running.
-            #
-            # RESUME MODE:
-            #   launch_game() does NOT start another Unity.
-            #   The existing paused Unity process detects
-            #   session.json and resumes.
-            #
-            # If this callback throws for any reason (missing build,
-            # OS launch failure, etc.), we catch it here so the app
-            # never just silently freezes with no explanation —
-            # the user sees exactly what went wrong and the window
-            # still closes cleanly afterward.
             try:
                 self.on_unlock_callback()
 
             except Exception as e:
                 print(f"[ui.py] on_unlock_callback failed: {e}")
+                # Keep the error as a popup since this is an actual problem
+                # the user needs to consciously acknowledge, not routine flow.
                 messagebox.showerror(
                     "Couldn't launch game",
                     f"Your minutes were saved, but the game "
@@ -243,17 +234,6 @@ class FitPlayApp:
                     f"You can launch it manually."
                 )
 
-            # Close FitPlay after the callback, whether it
-            # succeeded or failed — the session is already
-            # written either way, so there's nothing left for
-            # FitPlay to do here.
-            #
-            # root.destroy() does NOT trigger the
-            # WM_DELETE_WINDOW callback.
-            #
-            # Therefore this will NOT call lock_session().
-            # The unlocked session remains available for Unity.
-            #
             self.root.after(
                 500,
                 self.root.destroy
@@ -261,9 +241,9 @@ class FitPlayApp:
 
         else:
 
-            messagebox.showinfo(
-                "Unlocked!",
-                f"You earned {minutes_earned} minutes!"
+            self._set_status(
+                f"✅ Unlocked! You earned {minutes_earned} minutes.",
+                SUCCESS
             )
 
 # ── Run standalone for testing ──────────────────────────────────────────────

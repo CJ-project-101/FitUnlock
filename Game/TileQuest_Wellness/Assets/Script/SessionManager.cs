@@ -139,6 +139,7 @@ public class SessionManager : MonoBehaviour
         gameUnlocked = true;
 
         ResumeGame();
+        RestoreUnityWindow();
 
         if (gamePanel != null)   gamePanel.SetActive(true);
         if (lockedPanel != null) lockedPanel.SetActive(false);
@@ -258,16 +259,102 @@ public class SessionManager : MonoBehaviour
 #endif
     }
 
+    void RestoreUnityWindow()
+{
 #if UNITY_STANDALONE_WIN
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
-    static extern IntPtr GetActiveWindow();
 
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
-    static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+    IntPtr hwnd = GetUnityWindow();
 
-    const int SW_MINIMIZE = 6;
+    if (hwnd != IntPtr.Zero)
+    {
+        ShowWindow(hwnd, SW_RESTORE);
+        SetForegroundWindow(hwnd);
+
+        Debug.Log("[SessionManager] Unity window restored and brought to front.");
+    }
+    else
+    {
+        Debug.LogWarning("[SessionManager] Could not find Unity window.");
+    }
+
 #endif
 }
+
+
+#if UNITY_STANDALONE_WIN 
+    [System.Runtime.InteropServices.DllImport("user32.dll")] 
+    static extern IntPtr GetActiveWindow(); 
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")] 
+    static extern bool ShowWindow(IntPtr hWnd, int nCmdShow); 
+
+    const int SW_MINIMIZE = 6;
+
+    // ADD THESE
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    static extern bool SetForegroundWindow(IntPtr hWnd);
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    static extern bool IsWindowVisible(IntPtr hWnd);
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    static extern uint GetWindowThreadProcessId(
+        IntPtr hWnd,
+        out uint processId
+    );
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    static extern bool EnumWindows(
+        EnumWindowsProc lpEnumFunc,
+        IntPtr lParam
+    );
+
+    delegate bool EnumWindowsProc(
+        IntPtr hWnd,
+        IntPtr lParam
+    );
+
+    const int SW_RESTORE = 9;
+
+    // ADD THIS
+    IntPtr GetUnityWindow()
+    {
+        IntPtr result = IntPtr.Zero;
+
+        uint currentProcessId =
+            (uint)Process.GetCurrentProcess().Id;
+
+        EnumWindows(
+            (hWnd, lParam) =>
+            {
+                uint windowProcessId;
+
+                GetWindowThreadProcessId(
+                    hWnd,
+                    out windowProcessId
+                );
+
+                if (
+                    windowProcessId == currentProcessId &&
+                    IsWindowVisible(hWnd)
+                )
+                {
+                    result = hWnd;
+                    return false;
+                }
+
+                return true;
+            },
+            IntPtr.Zero
+        );
+
+        return result;
+    }
+#endif
+}
+
+
+
 
 [Serializable]
 public class SessionData
