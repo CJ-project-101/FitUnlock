@@ -11,13 +11,13 @@ from pose_detector import PoseDetector, Joint
 REWARDS = {
     "squats":        {"reps": 10, "minutes": 15},
     "jumping_jacks": {"reps": 15, "minutes": 20},
-    "push_ups":      {"reps": 8,  "minutes": 20},
+    "push_ups":      {"reps": 1,  "minutes": 1},
     "arm_raises":    {"reps": 12, "minutes": 10},
 }
 
 
 # ── Shared overlay helper ─────────────────────────────────────────────────────
-def draw_hud(frame, exercise_name, count, target, stage, angle_text=""):
+def draw_hud(frame, exercise_name, count, target, stage, angle_text="", instruction_text=""):
     """Draws the status panel on top of the camera frame."""
     h, w = frame.shape[:2]
 
@@ -39,6 +39,13 @@ def draw_hud(frame, exercise_name, count, target, stage, angle_text=""):
     cv2.putText(frame, f"Stage: {stage.upper() if stage else '---'}",
                 (20, 115), cv2.FONT_HERSHEY_SIMPLEX, 0.8, stage_color, 2)
 
+    # Optional setup instruction (e.g. "Face sideways to camera")
+    # Shown just below the top bar, in a highlighted color so it stands out
+    if instruction_text:
+        cv2.putText(frame, instruction_text,
+                    (20, 155), cv2.FONT_HERSHEY_SIMPLEX,
+                    0.65, (0, 200, 255), 2)
+
     # Optional angle readout (bottom-left)
     if angle_text:
         cv2.putText(frame, angle_text,
@@ -51,6 +58,7 @@ def draw_hud(frame, exercise_name, count, target, stage, angle_text=""):
     cv2.rectangle(frame, (0, h - 10), (bar_w, h), (0, 200, 100), -1)
 
     return frame
+
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -251,7 +259,8 @@ def run_push_ups():
                     count += 1
                     print(f"  Push-up rep {count} ✓")
 
-        frame = draw_hud(frame, "Push-Ups", count, TARGET, stage or "---", angle_txt)
+        frame = draw_hud(frame, "Push-Ups", count, TARGET, stage or "---", angle_txt,
+                          instruction_text="Position yourself sideways to the camera")
 
         if count >= TARGET:
             cv2.putText(frame, "DONE! Great work!",

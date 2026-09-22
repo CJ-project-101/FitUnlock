@@ -1,34 +1,59 @@
 using System;
 using System.IO;
+using Process = System.Diagnostics.Process;
+using ProcessStartInfo = System.Diagnostics.ProcessStartInfo;
 using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.SceneManagement;
 using TMPro;
 
 public class SessionManager : MonoBehaviour
 {
     [Header("UI References — drag these in from your scene")]
-    public TMP_Text timerText;          // shows countdown e.g. "14:59"
-    public GameObject gamePanel;    // your actual game / main menu UI
-    public GameObject lockedPanel;  // "Go exercise to unlock!" screen
+    public TMP_Text timerText;
+    public GameObject gamePanel;
+    public GameObject lockedPanel;
+
+    [Header("Player Control")]
+    public MonoBehaviour playerMovementScript;  // drag your PlayerMovement component here
 
     [Header("Settings")]
-    public float pollIntervalSeconds = 1.0f;  // how often to re-check the file
+    public float pollIntervalSeconds = 1.0f;
+    public float freshnessWindowSeconds = 60f;
 
     private string sessionPath;
+    private string projectRoot;
     private float timeRemaining = 0f;
     private bool gameUnlocked = false;
     private float pollTimer = 0f;
 
     void Awake()
     {
-        // shared/session.json sits ONE FOLDER UP from where the .exe lives,
-        // so this path works identically on Windows, Mac, and Linux builds.
-        string exeDir = Path.GetDirectoryName(Application.dataPath);
-        sessionPath = Path.Combine(exeDir, "..", "shared", "session.json");
-        sessionPath = Path.GetFullPath(sessionPath);
+        Debug.Log($"[SessionManager] Mode: {(Application.isEditor ? "EDITOR" : "BUILD")} | dataPath: {Application.dataPath}");
 
+        sessionPath = FindSharedFile("session.json");
         Debug.Log("[SessionManager] Looking for session file at: " + sessionPath);
+    }
+
+    string FindSharedFile(string filename)
+    {
+        string current = Path.GetDirectoryName(Application.dataPath);
+
+        for (int i = 0; i < 6; i++)
+        {
+            string sharedCandidate = Path.Combine(current, "shared");
+            if (Directory.Exists(sharedCandidate))
+            {
+                projectRoot = current;
+                return Path.GetFullPath(Path.Combine(sharedCandidate, filename));
+            }
+
+            DirectoryInfo parent = Directory.GetParent(current);
+            if (parent == null) break;
+            current = parent.FullName;
+        }
+
+        Debug.LogError("[SessionManager] Could not locate shared/ folder anywhere above: " + Application.dataPath);
+        projectRoot = Path.GetDirectoryName(Application.dataPath);
+        return Path.GetFullPath(Path.Combine(projectRoot, "shared", filename));
     }
 
     void Start()
@@ -38,9 +63,7 @@ public class SessionManager : MonoBehaviour
 
     void Update()
     {
-        // Re-check the file periodically in case Python writes to it
-        // while the game is already running (e.g. paused mid-play)
-        pollTimer += Time.deltaTime;
+        pollTimer += Time.unscaledDeltaTime;
         if (pollTimer >= pollIntervalSeconds)
         {
             pollTimer = 0f;
@@ -75,13 +98,19 @@ public class SessionManager : MonoBehaviour
             string json = File.ReadAllText(sessionPath);
             SessionData data = JsonUtility.FromJson<SessionData>(json);
 
-            if (data != null && data.status == "unlocked" && data.minutes_earned > 0)
+            if (data != null && data.status == "unlocked" && data.minutes_earned > 0
+                && IsTimestampFresh(data.timestamp))
             {
                 UnlockGame(data.minutes_earned);
-                ConsumeSession(); // prevent reusing the same unlock twice
+                ConsumeSession();
             }
             else
             {
+                if (data != null && data.status == "unlocked" && !IsTimestampFresh(data.timestamp))
+                {
+                    Debug.LogWarning("[SessionManager] Stale unlock detected — ignoring and re-locking.");
+                    ForceLockSession();
+                }
                 ShowLocked();
             }
         }
@@ -92,13 +121,28 @@ public class SessionManager : MonoBehaviour
         }
     }
 
+    bool IsTimestampFresh(string timestampStr)
+    {
+        if (string.IsNullOrEmpty(timestampStr)) return false;
+
+        DateTime writtenTime;
+        bool parsed = DateTime.TryParse(timestampStr, out writtenTime);
+        if (!parsed) return false;
+
+        double secondsSinceWrite = (DateTime.Now - writtenTime).TotalSeconds;
+        return secondsSinceWrite <= freshnessWindowSeconds;
+    }
+
     void UnlockGame(int minutesEarned)
     {
         timeRemaining = minutesEarned * 60f;
         gameUnlocked = true;
 
+        ResumeGame();
+
         if (gamePanel != null)   gamePanel.SetActive(true);
         if (lockedPanel != null) lockedPanel.SetActive(false);
+        if (playerMovementScript != null) playerMovementScript.enabled = true;
 
         Debug.Log($"[SessionManager] Unlocked! {minutesEarned} minutes of playtime.");
     }
@@ -107,14 +151,20 @@ public class SessionManager : MonoBehaviour
     {
         gameUnlocked = false;
 
+        PauseGame();
+
         if (gamePanel != null)   gamePanel.SetActive(false);
         if (lockedPanel != null) lockedPanel.SetActive(true);
+        if (playerMovementScript != null) playerMovementScript.enabled = false;
     }
 
     void ConsumeSession()
     {
-        // Immediately re-lock session.json so the SAME unlock
-        // can't be read again if the game restarts.
+        ForceLockSession();
+    }
+
+    void ForceLockSession()
+    {
         SessionData locked = new SessionData
         {
             status = "locked",
@@ -133,24 +183,90 @@ public class SessionManager : MonoBehaviour
         }
     }
 
-    void UpdateTimerDisplay()
+    void PauseGame()
     {
-        if (timerText == null) return;
-
-        int minutes = Mathf.FloorToInt(timeRemaining / 60f);
-        int seconds = Mathf.FloorToInt(timeRemaining % 60f);
-        timerText.text = $"{minutes:00}:{seconds:00}";
+        Time.timeScale = 0f;
+        AudioListener.pause = true;
     }
+
+    void ResumeGame()
+    {
+        Time.timeScale = 1f;
+        AudioListener.pause = false;
+    }
+
+    void UpdateTimerDisplay()
+{
+    if (timerText == null) return;
+
+    float clamped = Mathf.Max(timeRemaining, 0f);   // never show negative time
+    int minutes = Mathf.FloorToInt(clamped / 60f);
+    int seconds = Mathf.FloorToInt(clamped % 60f);
+    timerText.text = $"{minutes:00}:{seconds:00}";
+}
 
     void OnTimeExpired()
     {
-        Debug.Log("[SessionManager] Time's up! Locking game.");
+        Debug.Log("[SessionManager] Time's up! Pausing game and re-locking session.");
         gameUnlocked = false;
-        ShowLocked();
 
-        // Optional: quit the whole app instead of just showing the locked panel
-        // Application.Quit();
+        ForceLockSession();
+        ShowLocked();
+        LaunchFitPlayApp();
     }
+
+    void LaunchFitPlayApp()
+    {
+        string fitplayDir = Path.Combine(projectRoot, "python_app");
+
+        Debug.Log("[SessionManager] Launching FitPlay app...");
+
+        try
+        {
+#if UNITY_STANDALONE_WIN
+            string pythonExe = Path.GetFullPath(Path.Combine(projectRoot, "venv", "Scripts", "python.exe"));
+            var psi = new ProcessStartInfo
+            {
+                FileName = pythonExe,
+                Arguments = "\"" + Path.Combine(fitplayDir, "main.py") + "\" --resume-existing",
+                UseShellExecute = false
+            };
+            Process.Start(psi);
+#elif UNITY_STANDALONE_OSX || UNITY_STANDALONE_LINUX
+            string pythonExe = Path.GetFullPath(Path.Combine(projectRoot, "venv", "bin", "python3"));
+            var psi = new ProcessStartInfo
+            {
+                FileName = pythonExe,
+                Arguments = "\"" + Path.Combine(fitplayDir, "main.py") + "\" --resume-existing",
+                UseShellExecute = false
+            };
+            Process.Start(psi);
+#endif
+            MinimizeGameWindow();
+        }
+        catch (Exception e)
+        {
+            Debug.LogError("[SessionManager] Failed to launch FitPlay: " + e.Message);
+        }
+    }
+
+    void MinimizeGameWindow()
+    {
+#if UNITY_STANDALONE_WIN
+        var windowPtr = GetActiveWindow();
+        ShowWindow(windowPtr, SW_MINIMIZE);
+#endif
+    }
+
+#if UNITY_STANDALONE_WIN
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    static extern IntPtr GetActiveWindow();
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+    const int SW_MINIMIZE = 6;
+#endif
 }
 
 [Serializable]

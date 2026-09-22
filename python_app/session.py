@@ -76,6 +76,25 @@ def get_total_minutes_today():
 
 
 # ── session.json read/write ───────────────────────────────────────────────
+def _atomic_write_session(session_dict):
+    """
+    Shared helper — writes session_dict to session.json safely.
+    Writes to a temp file first, then atomically replaces the real file,
+    so Unity (or anything else polling) can never read a half-written
+    or empty session.json mid-write.
+    """
+    os.makedirs(os.path.dirname(SESSION_PATH), exist_ok=True)
+
+    temp_path = SESSION_PATH + ".tmp"
+
+    with open(temp_path, "w", encoding="utf-8") as f:
+        json.dump(session_dict, f, indent=2)
+        f.flush()
+        os.fsync(f.fileno())
+
+    os.replace(temp_path, SESSION_PATH)
+
+
 def write_session(minutes_earned, activity, reps_or_minutes):
     """
     Called after a successful exercise.
@@ -89,14 +108,18 @@ def write_session(minutes_earned, activity, reps_or_minutes):
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
 
-    os.makedirs(os.path.dirname(SESSION_PATH), exist_ok=True)
-    with open(SESSION_PATH, 'w') as f:
-        json.dump(session, f, indent=2)
+    _atomic_write_session(session)
 
-    log_session_to_db(activity, reps_or_minutes, minutes_earned)
+    log_session_to_db(
+        activity,
+        reps_or_minutes,
+        minutes_earned
+    )
 
-    print(f"[session.py] Wrote session: {activity} → {minutes_earned} min")
-
+    print(
+        f"[session.py] Wrote session: "
+        f"{activity} → {minutes_earned} min"
+    )
 
 def lock_session():
     """Resets session.json to locked state — call this on app startup."""
@@ -106,12 +129,10 @@ def lock_session():
         "activity_done": "",
         "timestamp": ""
     }
-    os.makedirs(os.path.dirname(SESSION_PATH), exist_ok=True)
-    with open(SESSION_PATH, 'w') as f:
-        json.dump(session, f, indent=2)
+
+    _atomic_write_session(session)
 
     print("[session.py] Session locked.")
-
 
 def read_session():
     """Reads current session.json — mainly useful for debugging from Python side."""

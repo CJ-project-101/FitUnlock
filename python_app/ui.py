@@ -193,17 +193,78 @@ class FitPlayApp:
         self.stats_value_label.config(text=str(get_total_minutes_today()))
         self.root.update_idletasks()
 
+    # ========================================================
+    # TRIGGER UNLOCK
+    # ========================================================
+
     def _trigger_unlock(self, minutes_earned):
-        self._refresh_stats()   # ← the actual fix: refresh right after writing to DB
+
+        # Update today's statistics
+        self._refresh_stats()
+
+
+        # ----------------------------------------------------
+        # NORMAL MODE / RESUME MODE
+        # ----------------------------------------------------
 
         if self.on_unlock_callback:
-            messagebox.showinfo("Unlocked!",
-                                 f"You earned {minutes_earned} minutes! Launching game...")
-            self.on_unlock_callback()
-        else:
-            messagebox.showinfo("Unlocked!",
-                                 f"You earned {minutes_earned} minutes!")
 
+            messagebox.showinfo(
+                "Unlocked!",
+                f"You earned {minutes_earned} minutes!\n\n"
+                f"Switching to game..."
+            )
+
+            # Important:
+            #
+            # NORMAL MODE:
+            #   launch_game() starts Unity if it isn't running.
+            #
+            # RESUME MODE:
+            #   launch_game() does NOT start another Unity.
+            #   The existing paused Unity process detects
+            #   session.json and resumes.
+            #
+            # If this callback throws for any reason (missing build,
+            # OS launch failure, etc.), we catch it here so the app
+            # never just silently freezes with no explanation —
+            # the user sees exactly what went wrong and the window
+            # still closes cleanly afterward.
+            try:
+                self.on_unlock_callback()
+
+            except Exception as e:
+                print(f"[ui.py] on_unlock_callback failed: {e}")
+                messagebox.showerror(
+                    "Couldn't launch game",
+                    f"Your minutes were saved, but the game "
+                    f"could not be launched automatically.\n\n"
+                    f"Error: {e}\n\n"
+                    f"You can launch it manually."
+                )
+
+            # Close FitPlay after the callback, whether it
+            # succeeded or failed — the session is already
+            # written either way, so there's nothing left for
+            # FitPlay to do here.
+            #
+            # root.destroy() does NOT trigger the
+            # WM_DELETE_WINDOW callback.
+            #
+            # Therefore this will NOT call lock_session().
+            # The unlocked session remains available for Unity.
+            #
+            self.root.after(
+                500,
+                self.root.destroy
+            )
+
+        else:
+
+            messagebox.showinfo(
+                "Unlocked!",
+                f"You earned {minutes_earned} minutes!"
+            )
 
 # ── Run standalone for testing ──────────────────────────────────────────────
 if __name__ == "__main__":
