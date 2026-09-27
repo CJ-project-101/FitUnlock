@@ -1,0 +1,856 @@
+fileFormatVersion: 2
+guid: 4c5627255d993674b9fde5e077ef0283
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -2513408272233960367
+    second: torch and trap_0
+  - first:
+      213: -70874601513135853
+    second: torch and trap_1
+  - first:
+      213: -4214761138570823811
+    second: torch and trap_2
+  - first:
+      213: -6942815815023648576
+    second: torch and trap_3
+  - first:
+      213: -3445169920241288373
+    second: torch and trap_4
+  - first:
+      213: -2192501253769785212
+    second: torch and trap_5
+  - first:
+      213: 6933451394216976711
+    second: torch and trap_6
+  - first:
+      213: -5108584427121909627
+    second: torch and trap_7
+  - first:
+      213: -5310472402148278414
+    second: torch and trap_8
+  - first:
+      213: 6837068493454883505
+    second: torch and trap_9
+  - first:
+      213: -1813736316024571469
+    second: torch and trap_10
+  - first:
+      213: -6340293088695538024
+    second: torch and trap_11
+  - first:
+      213: 277383915778556889
+    second: torch and trap_12
+  - first:
+      213: 3262872743563957530
+    second: torch and trap_13
+  - first:
+      213: 202844682448123493
+    second: torch and trap_14
+  - first:
+      213: 8623383951851717578
+    second: torch and trap_15
+  - first:
+      213: 205190034792464404
+    second: torch and trap_16
+  - first:
+      213: -491576370441778879
+    second: torch and trap_17
+  - first:
+      213: 7896505239697922555
+    second: torch and trap_18
+  - first:
+      213: -6735051172432474224
+    second: torch and trap_19
+  - first:
+      213: -1849619614472608477
+    second: torch and trap_20
+  - first:
+      213: 7030172033942617870
+    second: torch and trap_21
+  - first:
+      213: 6082119760756752870
+    second: torch and trap_22
+  - first:
+      213: -2905425348352699499
+    second: torch and trap_23
+  - first:
+      213: -972913136374149414
+    second: torch and trap_24
+  - first:
+      213: -7872062376616058187
+    second: torch and trap_25
+  - first:
+      213: 3434323795282889095
+    second: torch and trap_26
+  - first:
+      213: 4610374815707809355
+    second: torch and trap_27
+  - first:
+      213: 4610383625194844465
+    second: torch and trap_28
+  - first:
+      213: -267405232237071265
+    second: torch and trap_29
+  - first:
+      213: -70143374784640782
+    second: torch and trap_30
+  - first:
+      213: 2829623515386862958
+    second: torch and trap_31
+  - first:
+      213: -5142188285871273203
+    second: torch and trap_32
+  - first:
+      213: 3412639924355759099
+    second: torch and trap_33
+  - first:
+      213: 4753157868755938174
+    second: torch and trap_34
+  - first:
+      213: 7782467140665379216
+    second: torch and trap_35
+  - first:
+      213: 8565112822059903823
+    second: torch and trap_36
+  - first:
+      213: -8772128899108232738
+    second: torch and trap_37
+  - first:
+      213: 6111519851745403651
+    second: torch and trap_38
+  - first:
+      213: 2034697688614695479
+    second: torch and trap_39
+  - first:
+      213: -2923466534041332168
+    second: torch and trap_40
+  - first:
+      213: 3394057824134266259
+    second: torch and trap_41
+  - first:
+      213: -1300254753196750840
+    second: torch and trap_42
+  - first:
+      213: 3733963396092916990
+    second: torch and trap_43
+  - first:
+      213: -2979573619496430404
+    second: torch and trap_44
+  - first:
+      213: -1341296623608093856
+    second: torch and trap_45
+  - first:
+      213: -939131151999049941
+    second: torch and trap_46
+  - first:
+      213: 3254256315086709834
+    second: torch and trap_47
+  - first:
+      213: -3189130550611318338
+    second: torch and trap_48
+  - first:
+      213: -6774195176630900261
+    second: torch and trap_49
+  - first:
+      213: -8714753213906826653
+    second: torch and trap_50
+  - first:
+      213: -6657003747508969885
+    second: torch and trap_51
+  - first:
+      213: 7887073111045548825
+    second: torch and trap_52
+  - first:
+      213: -8206783092208954440
+    second: torch and trap_53
+  - first:
+      213: 1016224120099226432
+    second: torch and trap_54
+  - first:
+      213: 6319888034260463610
+    second: torch and trap_55
+  - first:
+      213: 4786678112374076012
+    second: torch and trap_56
+  - first:
+      213: 9193456593780930159
+    second: torch and trap_57
+  - first:
+      213: -2899278875468303600
+    second: torch and trap_58
+  - first:
+      213: 8089230370227936445
+    second: torch and trap_59
+  - first:
+      213: -5981198689756675933
+    second: torch and trap_60
+  - first:
+      213: 2873331827868214791
+    second: torch and trap_61
+  - first:
+      213: 6235126730999324178
+    second: torch and trap_62
+  - first:
+      213: -6417911784077201753
+    second: torch and trap_63
+  - first:
+      213: -8325601874870366972
+    second: torch and trap_64
+  - first:
+      213: -1947047079808137939
+    second: torch and trap_65
+  - first:
+      213: -2321698135737286183
+    second: torch and trap_66
+  - first:
+      213: 9134777582996638436
+    second: torch and trap_67
+  - first:
+      213: -3938203047001502059
+    second: torch and trap_68
+  - first:
+      213: -3683808371259842480
+    second: torch and trap_69
+  - first:
+      213: 3382084367608851024
+    second: torch and trap_70
+  - first:
+      213: -2515311232779380755
+    second: torch and trap_71
+  - first:
+      213: -3275671337254509466
+    second: torch and trap_72
+  - first:
+      213: -3803055480554034241
+    second: torch and trap_73
+  - first:
+      213: 7788208360979575573
+    second: torch and trap_74
+  - first:
+      213: 9037551514718510163
+    second: torch and trap_75
+  - first:
+      213: -4738732677670080734
+    second: torch and trap_76
+  - first:
+      213: -8025732971816577001
+    second: torch and trap_77
+  - first:
+      213: 1083812263934056855
+    second: torch and trap_78
+  - first:
+      213: 2019294785136938313
+    second: torch and trap_79
+  - first:
+      213: -4381901337314685880
+    second: torch and trap_80
+  - first:
+      213: -8739243134924317783
+    second: torch and trap_81
+  - first:
+      213: 1800155768945682116
+    second: torch and trap_82
+  - first:
+      213: -712399688555544521
+    second: torch and trap_83
+  - first:
+      213: -3486488714890229136
+    second: torch and trap_84
+  - first:
+      213: -2099638132469496170
+    second: torch and trap_85
+  - first:
+      213: -5614602759181729665
+    second: torch and trap_86
+  - first:
+      213: -4076004564528103304
+    second: torch and trap_87
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 64
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: torch and trap_0
+      rect:
+        serializedVersion: 2
+        x: 60
+        y: 236
+        width: 82
+        height: 59
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 15c67f53e749e1dd0800000000000000
+      internalID: -2513408272233960367
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: torch and trap_1
+      rect:
+        serializedVersion: 2
+        x: 165
+        y: 231
+        width: 89
+        height: 66
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 8, y: 0, z: 6, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3115639ece3340ff0800000000000000
+      internalID: -70874601513135853
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: torch and trap_2
+      rect:
+        serializedVersion: 2
+        x: 296
+        y: 235
+        width: 89
+        height: 66
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d777d5243192285c0800000000000000
+      internalID: -4214761138570823811
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: torch and trap_3
+      rect:
+        serializedVersion: 2
+        x: 421
+        y: 233
+        width: 89
+        height: 66
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0c02d840dc926af90800000000000000
+      internalID: -6942815815023648576
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: torch and trap_16
+      rect:
+        serializedVersion: 2
+        x: 543
+        y: 241
+        width: 83
+        height: 60
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 410414fdf3bf8d200800000000000000
+      internalID: 205190034792464404
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: torch and trap_76
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 127
+        width: 32
+        height: 39
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 22f60fd8cb3ac3eb0800000000000000
+      internalID: -4738732677670080734
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: torch and trap_77
+      rect:
+        serializedVersion: 2
+        x: 75
+        y: 127
+        width: 40
+        height: 43
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7189bb0626ede9090800000000000000
+      internalID: -8025732971816577001
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: torch and trap_78
+      rect:
+        serializedVersion: 2
+        x: 147
+        y: 127
+        width: 32
+        height: 41
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 799500303897a0f00800000000000000
+      internalID: 1083812263934056855
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: torch and trap_79
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 127
+        width: 40
+        height: 45
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 94dc2ec88e9f50c10800000000000000
+      internalID: 2019294785136938313
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: torch and trap_80
+      rect:
+        serializedVersion: 2
+        x: 74
+        y: 0
+        width: 43
+        height: 51
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 84c8c8433fb5033c0800000000000000
+      internalID: -4381901337314685880
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: torch and trap_81
+      rect:
+        serializedVersion: 2
+        x: 135
+        y: 0
+        width: 52
+        height: 55
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9ab9019dba8f7b680800000000000000
+      internalID: -8739243134924317783
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: torch and trap_82
+      rect:
+        serializedVersion: 2
+        x: 202
+        y: 0
+        width: 43
+        height: 53
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4c6a06c52207bf810800000000000000
+      internalID: 1800155768945682116
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: torch and trap_83
+      rect:
+        serializedVersion: 2
+        x: 263
+        y: 0
+        width: 52
+        height: 57
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7304c89f14c0d16f0800000000000000
+      internalID: -712399688555544521
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: torch and trap_84
+      rect:
+        serializedVersion: 2
+        x: 388
+        y: 0
+        width: 57
+        height: 66
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 07a4f8b6cf08d9fc0800000000000000
+      internalID: -3486488714890229136
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: torch and trap_85
+      rect:
+        serializedVersion: 2
+        x: 446
+        y: 0
+        width: 65
+        height: 68
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6968a4d2e369cd2e0800000000000000
+      internalID: -2099638132469496170
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: torch and trap_86
+      rect:
+        serializedVersion: 2
+        x: 514
+        y: 0
+        width: 57
+        height: 66
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f708b08b98ce412b0800000000000000
+      internalID: -5614602759181729665
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: torch and trap_87
+      rect:
+        serializedVersion: 2
+        x: 576
+        y: 0
+        width: 64
+        height: 70
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8708e64b17f1f67c0800000000000000
+      internalID: -4076004564528103304
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 679bcb92ba9fb754d96f8dd6b1041208
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      torch and trap_0: -2513408272233960367
+      torch and trap_1: -70874601513135853
+      torch and trap_10: -1813736316024571469
+      torch and trap_11: -6340293088695538024
+      torch and trap_12: 277383915778556889
+      torch and trap_13: 3262872743563957530
+      torch and trap_14: 202844682448123493
+      torch and trap_15: 8623383951851717578
+      torch and trap_16: 205190034792464404
+      torch and trap_17: -491576370441778879
+      torch and trap_18: 7896505239697922555
+      torch and trap_19: -6735051172432474224
+      torch and trap_2: -4214761138570823811
+      torch and trap_20: -1849619614472608477
+      torch and trap_21: 7030172033942617870
+      torch and trap_22: 6082119760756752870
+      torch and trap_23: -2905425348352699499
+      torch and trap_24: -972913136374149414
+      torch and trap_25: -7872062376616058187
+      torch and trap_26: 3434323795282889095
+      torch and trap_27: 4610374815707809355
+      torch and trap_28: 4610383625194844465
+      torch and trap_29: -267405232237071265
+      torch and trap_3: -6942815815023648576
+      torch and trap_30: -70143374784640782
+      torch and trap_31: 2829623515386862958
+      torch and trap_32: -5142188285871273203
+      torch and trap_33: 3412639924355759099
+      torch and trap_34: 4753157868755938174
+      torch and trap_35: 7782467140665379216
+      torch and trap_36: 8565112822059903823
+      torch and trap_37: -8772128899108232738
+      torch and trap_38: 6111519851745403651
+      torch and trap_39: 2034697688614695479
+      torch and trap_4: -3445169920241288373
+      torch and trap_40: -2923466534041332168
+      torch and trap_41: 3394057824134266259
+      torch and trap_42: -1300254753196750840
+      torch and trap_43: 3733963396092916990
+      torch and trap_44: -2979573619496430404
+      torch and trap_45: -1341296623608093856
+      torch and trap_46: -939131151999049941
+      torch and trap_47: 3254256315086709834
+      torch and trap_48: -3189130550611318338
+      torch and trap_49: -6774195176630900261
+      torch and trap_5: -2192501253769785212
+      torch and trap_50: -8714753213906826653
+      torch and trap_51: -6657003747508969885
+      torch and trap_52: 7887073111045548825
+      torch and trap_53: -8206783092208954440
+      torch and trap_54: 1016224120099226432
+      torch and trap_55: 6319888034260463610
+      torch and trap_56: 4786678112374076012
+      torch and trap_57: 9193456593780930159
+      torch and trap_58: -2899278875468303600
+      torch and trap_59: 8089230370227936445
+      torch and trap_6: 6933451394216976711
+      torch and trap_60: -5981198689756675933
+      torch and trap_61: 2873331827868214791
+      torch and trap_62: 6235126730999324178
+      torch and trap_63: -6417911784077201753
+      torch and trap_64: -8325601874870366972
+      torch and trap_65: -1947047079808137939
+      torch and trap_66: -2321698135737286183
+      torch and trap_67: 9134777582996638436
+      torch and trap_68: -3938203047001502059
+      torch and trap_69: -3683808371259842480
+      torch and trap_7: -5108584427121909627
+      torch and trap_70: 3382084367608851024
+      torch and trap_71: -2515311232779380755
+      torch and trap_72: -3275671337254509466
+      torch and trap_73: -3803055480554034241
+      torch and trap_74: 7788208360979575573
+      torch and trap_75: 9037551514718510163
+      torch and trap_76: -4738732677670080734
+      torch and trap_77: -8025732971816577001
+      torch and trap_78: 1083812263934056855
+      torch and trap_79: 2019294785136938313
+      torch and trap_8: -5310472402148278414
+      torch and trap_80: -4381901337314685880
+      torch and trap_81: -8739243134924317783
+      torch and trap_82: 1800155768945682116
+      torch and trap_83: -712399688555544521
+      torch and trap_84: -3486488714890229136
+      torch and trap_85: -2099638132469496170
+      torch and trap_86: -5614602759181729665
+      torch and trap_87: -4076004564528103304
+      torch and trap_9: 6837068493454883505
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

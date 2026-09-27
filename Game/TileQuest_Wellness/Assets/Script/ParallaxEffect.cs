@@ -6,6 +6,7 @@ public class ParallaxEffect : MonoBehaviour
 private float length,startposi;
 public GameObject cam;
 public float parallaxEffect;
+public GameObject player;
 
   void Start()
     {
@@ -14,15 +15,20 @@ public float parallaxEffect;
         
     }
 
-    void FixedUpdate () 
-    {
-        float temp = (cam.transform.position.x * (1 - parallaxEffect));
-        float dist = (cam.transform.position.x * parallaxEffect);
-        transform.position = new Vector3(startposi + dist, transform.position.y, transform.position.z);
+   void LateUpdate()
+{
+    float temp = (cam.transform.position.x * (1 - parallaxEffect));
+    float dist = (player.transform.position.x - startposi) * parallaxEffect;
 
-        if (temp > startposi + length) 
-            startposi += length;
-        else if (temp < startposi - length) 
-            startposi -= length;
-    }
+    transform.position = new Vector3(
+        startposi + dist,
+        transform.position.y,
+        transform.position.z
+    );
+
+    if (temp > startposi + length) 
+        startposi += length;
+    else if (temp < startposi - length) 
+        startposi -= length;
+}
 }

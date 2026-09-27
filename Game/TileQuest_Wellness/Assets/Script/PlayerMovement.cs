@@ -17,6 +17,9 @@ public class PlayerMovement : MonoBehaviour
     float gravityScaleAtStart;
     bool isAlive =true;
 
+    [Header("Death Effect")]
+    public GameObject smokePoofPrefab;   // drag your SmokePoof prefab here in Inspector
+    private SpriteRenderer mySpriteRenderer; 
 
     void Start() 
     {
@@ -25,6 +28,7 @@ public class PlayerMovement : MonoBehaviour
         myBodyCollider = GetComponent<CapsuleCollider2D>();
         myFeetCollider = GetComponent<BoxCollider2D>();
         gravityScaleAtStart = myRigidbody.gravityScale;
+        mySpriteRenderer = GetComponent<SpriteRenderer>();
     }
 
    
@@ -101,13 +105,27 @@ public class PlayerMovement : MonoBehaviour
         myAnimator.SetBool("IsClimbing", playerHasVerticalSpeed);
     }
 
-    void Die()
+    
+
+public void Die()
+{
+    if (myBodyCollider.IsTouchingLayers(LayerMask.GetMask("Enemies", "Hazards")))
     {
-        if(myBodyCollider.IsTouchingLayers(LayerMask.GetMask("Enemies","Hazards")))
+        isAlive = false;
+        myAnimator.SetTrigger("Dying");
+
+        // Spawn the smoke poof at the player's current position
+        if (smokePoofPrefab != null)
         {
-            isAlive=false;
-            myAnimator.SetTrigger("Dying");
-            myRigidbody.linearVelocity=deathKick;
+            Instantiate(smokePoofPrefab, transform.position, Quaternion.identity);
         }
+
+        // Instantly hide the player sprite instead of kicking it
+        mySpriteRenderer.enabled = false;
+
+        // Optional: stop the player from moving/falling further while "dead"
+        myRigidbody.linearVelocity = Vector2.zero;
+        myRigidbody.bodyType = RigidbodyType2D.Kinematic;
     }
+}
 }

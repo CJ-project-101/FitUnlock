@@ -134,7 +134,7 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 1864825529
-  m_SortingLayer: 7
+  m_SortingLayer: 8
   m_SortingOrder: 0
   m_Sprite: {fileID: 1857188551261513057, guid: 322494bbd0e454c4e8bc99cd7b8c17e4, type: 3}
   m_Color: {r: 0.6, g: 0.6, b: 0.6, a: 1}
@@ -259,6 +259,7 @@ MonoBehaviour:
   deathKick: {x: 20, y: 20}
   bullet: {fileID: 3318480692095087720, guid: 475e5f80e40f3384091b7a81ef24a25a, type: 3}
   gun: {fileID: 6677490674966027141}
+  smokePoofPrefab: {fileID: 0}
 --- !u!61 &6911054099286933785
 BoxCollider2D:
   m_ObjectHideFlags: 0
