@@ -2,32 +2,40 @@ using UnityEngine;
 
 public class Bullet : MonoBehaviour
 {
-    [SerializeField] float bulletSpeed = 20f;
-    Rigidbody2D myRigidbody;
-    PlayerMovement player;
-    float xSpeed;
+    [SerializeField] private float bulletSpeed = 20f;
 
-    void Start()
+    private Rigidbody2D myRigidbody;
+    private SpriteRenderer spriteRenderer;
+
+    private Vector2 direction = Vector2.right;
+
+    private void Awake()
     {
         myRigidbody = GetComponent<Rigidbody2D>();
-
-        // ✅ Updated for Unity 6 (FindFirstObjectByType replaces FindObjectOfType)
-        player = Object.FindFirstObjectByType<PlayerMovement>();
-
-        // Safety check in case player isn’t found
-        if (player != null)
-            xSpeed = player.transform.localScale.x * bulletSpeed;
-        else
-            Debug.LogWarning("⚠️ PlayerMovement not found! Bullet may not move correctly.");
+        spriteRenderer = GetComponent<SpriteRenderer>();
     }
 
-    void Update()
+    public void SetDirection(Vector2 newDirection)
     {
-        // Use velocity (not linearVelocity) — “linearVelocity” is an internal alias and may cause issues
-        myRigidbody.linearVelocity = new Vector2(xSpeed, 0f);
+        direction = newDirection.normalized;
+
+        // Your fire-spell animation is originally facing LEFT.
+        // Therefore, flip the sprite when shooting RIGHT.
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.flipX = direction.x > 0;
+        }
     }
 
-    void OnTriggerEnter2D(Collider2D other)
+    private void Update()
+    {
+        if (myRigidbody != null)
+        {
+            myRigidbody.linearVelocity = direction * bulletSpeed;
+        }
+    }
+
+    private void OnTriggerEnter2D(Collider2D other)
     {
         if (other.CompareTag("Enemy"))
         {
@@ -37,7 +45,7 @@ public class Bullet : MonoBehaviour
         Destroy(gameObject);
     }
 
-    void OnCollisionEnter2D(Collision2D other)
+    private void OnCollisionEnter2D(Collision2D collision)
     {
         Destroy(gameObject);
     }

@@ -10,10 +10,10 @@ GameObject:
   m_Component:
   - component: {fileID: 1341987729201776092}
   - component: {fileID: 480460757707368074}
+  - component: {fileID: 4354288086645065766}
   - component: {fileID: -2338992796369602551}
-  - component: {fileID: 8297954743939011193}
-  - component: {fileID: -8078752933133970611}
   - component: {fileID: 934020101781931401}
+  - component: {fileID: 8297954743939011193}
   m_Layer: 8
   m_Name: Bullets
   m_TagString: Untagged
@@ -31,7 +31,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0.005749955, y: -0.9998357, z: 0.00009886041, w: 0.017190425}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.67, y: 0.5, z: 0.87}
+  m_LocalScale: {x: 0.67, y: 0.5, z: 0.86999995}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -80,7 +80,7 @@ SpriteRenderer:
   m_SortingLayerID: 1864825529
   m_SortingLayer: 8
   m_SortingOrder: 0
-  m_Sprite: {fileID: 4846352920877607924, guid: 0b758ba82fff25746938b51e56118a8d, type: 3}
+  m_Sprite: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -88,9 +88,31 @@ SpriteRenderer:
   m_Size: {x: 1, y: 1}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!95 &4354288086645065766
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3318480692095087720}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: c92a9abab56de0b43a16a8ae95c3f791, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!50 &-2338992796369602551
 Rigidbody2D:
   serializedVersion: 5
@@ -118,35 +140,6 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 1
   m_Constraints: 4
---- !u!114 &8297954743939011193
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3318480692095087720}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 190881dc963b077449a581c941ba6fbf, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  bulletSpeed: 20
---- !u!114 &-8078752933133970611
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3318480692095087720}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 25a96212014ef634596f27cd1edc21bf, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  fireSpellPrefab: {fileID: 0}
-  fireSpellUpPrefab: {fileID: 0}
-  firePoint: {fileID: 0}
-  spellSpeed: 15
 --- !u!60 &934020101781931401
 PolygonCollider2D:
   m_ObjectHideFlags: 0
@@ -185,7 +178,7 @@ PolygonCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1.1148628, y: 0.49749255}
+    oldSize: {x: 1.116, y: 0.498}
     newSize: {x: 1, y: 1}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
@@ -265,3 +258,16 @@ PolygonCollider2D:
       - {x: 0.45953128, y: 0.05893988}
       - {x: 0.43555576, y: 0.08691135}
   m_UseDelaunayMesh: 0
+--- !u!114 &8297954743939011193
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3318480692095087720}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 190881dc963b077449a581c941ba6fbf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bulletSpeed: 5

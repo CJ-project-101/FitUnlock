@@ -1,13 +1,10 @@
 fileFormatVersion: 2
-guid: 92b55d431d2febf44b05126f5e6f9b67
+guid: a6af0db653d87c3479b556a4bf42d424
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -6245173599176659170
-    second: Fire Spell_Frame_08_0
-  - first:
-      213: 9037514540108215124
-    second: Fire Spell_Frame_08_1
+      213: 278565380412371
+    second: tile24 (1)_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -54,7 +51,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 500.51
+  spritePixelsToUnits: 64
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -116,45 +113,23 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Fire Spell_Frame_08_0
+      name: tile24 (1)_0
       rect:
         serializedVersion: 2
-        x: 28
-        y: 59
-        width: 492
-        height: 242
+        x: 191
+        y: 371
+        width: 64
+        height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: e1f6d6c23bfa459a0800000000000000
-      internalID: -6245173599176659170
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Fire Spell_Frame_08_1
-      rect:
-        serializedVersion: 2
-        x: 531
-        y: 140
-        width: 61
-        height: 69
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 453f3976793bb6d70800000000000000
-      internalID: 9037514540108215124
+      spriteID: 3d3db8e8a5df00000800000000000000
+      internalID: 278565380412371
       vertices: []
       indices: 
       edges: []
@@ -163,7 +138,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: bd060d81462345645bb74120e8cc598e
     internalID: 0
     vertices: []
     indices: 
@@ -173,8 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Fire Spell_Frame_08_0: -6245173599176659170
-      Fire Spell_Frame_08_1: 9037514540108215124
+      tile24 (1)_0: 278565380412371
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
