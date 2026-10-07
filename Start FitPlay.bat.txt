@@ -1,0 +1,26 @@
+@echo off
+
+title FitPlay Launcher
+
+echo ==========================================
+echo              FITPLAY
+echo ==========================================
+echo.
+echo Starting FitPlay Python system...
+echo.
+
+start "FitPlay Python" cmd /k "cd /d "D:\Major project\python_app" && "D:\Major project\venv\Scripts\python.exe" main.py"
+
+timeout /t 3 /nobreak >nul
+
+echo.
+echo Starting FitPlay Unity game...
+echo.
+
+start "FitPlay Game" "D:\Major project\unity_build\Platformer_Wellness.exe"
+
+echo.
+echo ==========================================
+echo       FITPLAY STARTED
+echo ==========================================
+echo.

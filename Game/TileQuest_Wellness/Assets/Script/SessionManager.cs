@@ -4,9 +4,12 @@ using Process = System.Diagnostics.Process;
 using ProcessStartInfo = System.Diagnostics.ProcessStartInfo;
 using UnityEngine;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 public class SessionManager : MonoBehaviour
 {
+    private static SessionManager instance;
+    
     [Header("UI References — drag these in from your scene")]
     public TMP_Text timerText;
     public GameObject gamePanel;
@@ -27,9 +30,15 @@ public class SessionManager : MonoBehaviour
 
     void Awake()
     {
-        Debug.Log($"[SessionManager] Mode: {(Application.isEditor ? "EDITOR" : "BUILD")} | dataPath: {Application.dataPath}");
-
+        if (instance != null)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        instance= this;
+        DontDestroyOnLoad(gameObject);
         sessionPath = FindSharedFile("session.json");
+        SceneManager.sceneLoaded += OnSceneLoaded;
         Debug.Log("[SessionManager] Looking for session file at: " + sessionPath);
     }
 
@@ -278,6 +287,24 @@ public class SessionManager : MonoBehaviour
     }
 
 #endif
+}
+
+private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+{
+    GameObject canvas = GameObject.Find("Canvas");
+
+    GameObject timer = GameObject.Find("TimerText");
+    GameObject gamePanelObject = GameObject.Find("GamePanel");
+    Transform locked = canvas.transform.Find("LockedPanel");
+
+    if (timer != null)
+        timerText = timer.GetComponent<TMP_Text>();
+
+    if (gamePanelObject != null)
+        gamePanel = gamePanelObject;
+
+    if (locked != null)
+        lockedPanel = locked.gameObject;
 }
 
 

@@ -48,6 +48,8 @@ public class FireSpell : MonoBehaviour
         if (bullet != null)
         {
             bullet.SetDirection(new Vector2(direction, 0f));
+
+            bullet.SetPlayerFirePosition(transform.root.position);
         }
     }
 
@@ -71,6 +73,8 @@ public class FireSpell : MonoBehaviour
         if (bullet != null)
         {
             bullet.SetDirection(Vector2.up);
+
+            bullet.SetPlayerFirePosition(transform.root.position);
         }
     }
 }
