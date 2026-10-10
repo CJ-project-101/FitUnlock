@@ -1,20 +1,19 @@
 import json
 import os
 import sqlite3
+import time
 from datetime import datetime
 
 MAX_BANK_SECONDS = 60 * 60
 
 # ── Paths ──────────────────────────────────────────────────────────────────
-# session.json lives in the shared/ folder so both Python and Unity can find it
-BASE_DIR     = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # FitPlay/
+BASE_DIR     = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SESSION_PATH = os.path.join(BASE_DIR, "shared", "session.json")
 DB_PATH      = os.path.join(BASE_DIR, "shared", "fitplay.db")
 
 
-# ── SQLite setup ───────────────────────────────────────────────────────────
+# ── SQLite history ─────────────────────────────────────────────────────────
 def init_db():
-    """Creates the sessions table if it doesn't already exist."""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
@@ -31,7 +30,6 @@ def init_db():
 
 
 def log_session_to_db(activity, reps_or_minutes, minutes_earned):
-    """Adds one row to the history table."""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
@@ -48,14 +46,11 @@ def log_session_to_db(activity, reps_or_minutes, minutes_earned):
 
 
 def get_session_history(limit=10):
-    """Returns the most recent sessions — useful for a stats screen later."""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
         SELECT activity, reps_or_minutes, minutes_earned, timestamp
-        FROM sessions
-        ORDER BY id DESC
-        LIMIT ?
+        FROM sessions ORDER BY id DESC LIMIT ?
     """, (limit,))
     rows = cursor.fetchall()
     conn.close()
@@ -63,7 +58,6 @@ def get_session_history(limit=10):
 
 
 def get_total_minutes_today():
-    """Returns total minutes earned today — nice for a dashboard stat."""
     today = datetime.now().strftime("%Y-%m-%d")
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -76,16 +70,22 @@ def get_total_minutes_today():
     return result if result else 0
 
 
-# ── session.json read/write ───────────────────────────────────────────────
-def _atomic_write_session(session_dict):
-    """
-    Shared helper — writes session_dict to session.json safely.
-    Writes to a temp file first, then atomically replaces the real file,
-    so Unity (or anything else polling) can never read a half-written
-    or empty session.json mid-write.
-    """
-    os.makedirs(os.path.dirname(SESSION_PATH), exist_ok=True)
+# ── session.json ───────────────────────────────────────────────────────────
+def _default_session():
+    return {
+        "banked_seconds": 0,
+        "max_bank_seconds": MAX_BANK_SECONDS,
+        "active_session": {
+            "status": "locked",
+            "seconds_remaining": 0,
+            "started_at": ""
+        }
+    }
 
+
+def _atomic_write_session(session_dict):
+    """Write to a temp file, then swap it in. Retries if Unity has the file open."""
+    os.makedirs(os.path.dirname(SESSION_PATH), exist_ok=True)
     temp_path = SESSION_PATH + ".tmp"
 
     with open(temp_path, "w", encoding="utf-8") as f:
@@ -93,76 +93,91 @@ def _atomic_write_session(session_dict):
         f.flush()
         os.fsync(f.fileno())
 
-    os.replace(temp_path, SESSION_PATH)
-
-MAX_BANK_MINUTES = 60
+    for _ in range(10):
+        try:
+            os.replace(temp_path, SESSION_PATH)
+            return
+        except PermissionError:
+            time.sleep(0.05)
+    os.replace(temp_path, SESSION_PATH)   # last attempt, let it raise
 
 
 def read_session():
+    """
+    Always returns a clean, seconds-based session dict.
+    Legacy keys (banked_minutes, max_bank, ...) are dropped on the next write.
+    """
     if not os.path.exists(SESSION_PATH):
-        return {
-            "banked_minutes": 0,
-            "max_bank": MAX_BANK_MINUTES,
-            "active_session": {
-                "status": "locked",
-                "minutes_remaining": 0,
-                "started_at": ""
-            }
-        }
+        return _default_session()
 
-    with open(SESSION_PATH, "r", encoding="utf-8") as f:
-        return json.load(f)
+    data = None
+    for _ in range(5):
+        try:
+            with open(SESSION_PATH, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            break
+        except (json.JSONDecodeError, OSError):
+            time.sleep(0.05)      # Unity may be mid-write
+
+    if not isinstance(data, dict):
+        print("[session.py] session.json unreadable - using a clean default.")
+        return _default_session()
+
+    session = _default_session()
+
+    try:
+        bank = int(data.get("banked_seconds", 0))
+    except (TypeError, ValueError):
+        bank = 0
+    session["banked_seconds"] = max(0, min(bank, MAX_BANK_SECONDS))
+
+    active = data.get("active_session") or {}
+    for key in ("status", "seconds_remaining", "started_at"):
+        if key in active:
+            session["active_session"][key] = active[key]
+
+    return session
 
 
-def add_minutes_to_bank(earned_minutes):
+def add_minutes_to_bank(earned_minutes, activity=None, reps_or_minutes=""):
+    """
+    Adds earned time to the bank, capped at one hour.
+    Pass `activity` to also log the session to SQLite.
+    """
+    earned_seconds = int(round(earned_minutes * 60))   # JSON must hold an int
+
     session = read_session()
-
-    current = session.get("banked_seconds", 0)
-    earned_seconds = earned_minutes * 60
-
-    new_total = min(
-        current + earned_seconds,
-        MAX_BANK_SECONDS
-    )
-
+    new_total = min(session["banked_seconds"] + earned_seconds, MAX_BANK_SECONDS)
     session["banked_seconds"] = new_total
-
-    if "active_session" not in session:
-        session["active_session"] = {
-            "status": "locked",
-            "seconds_remaining": 0,
-            "started_at": ""
-        }
 
     _atomic_write_session(session)
 
-    print(
-        f"[session.py] Banked {earned_minutes} min. "
-        f"Total: {new_total // 60} min "
-        f"{new_total % 60:02d} sec"
-    )
+    if activity is not None:
+        log_session_to_db(activity, reps_or_minutes, earned_minutes)
 
+    print(f"[session.py] Banked {earned_seconds} sec. "
+          f"Total: {new_total // 60} min {new_total % 60:02d} sec")
     return new_total
 
 
 def get_banked_seconds():
-    return read_session().get("banked_seconds", 0)
+    return read_session()["banked_seconds"]
 
 
 def start_play_session(seconds_to_spend):
-    session = read_session()
-
-    current_bank = session.get("banked_seconds", 0)
-
-    if seconds_to_spend > current_bank:
-        print(
-            f"[session.py] Not enough time "
-            f"({current_bank} seconds available)."
-        )
+    """Moves time from the bank into an active, timestamped play session."""
+    seconds_to_spend = int(seconds_to_spend)
+    if seconds_to_spend <= 0:
         return False
 
-    session["banked_seconds"] = current_bank - seconds_to_spend
+    session = read_session()
+    bank = session["banked_seconds"]
 
+    if seconds_to_spend > bank:
+        print(f"[session.py] Not enough time ({bank} seconds available).")
+        return False
+
+    session["banked_seconds"] = bank - seconds_to_spend
     session["active_session"] = {
         "status": "unlocked",
         "seconds_remaining": seconds_to_spend,
@@ -170,28 +185,18 @@ def start_play_session(seconds_to_spend):
     }
 
     _atomic_write_session(session)
-
-    print(
-        f"[session.py] Started play session: "
-        f"{seconds_to_spend} seconds. "
-        f"Remaining bank: {session['banked_seconds']} seconds"
-    )
-
+    print(f"[session.py] Play session: {seconds_to_spend} sec. "
+          f"Bank left: {session['banked_seconds']} sec")
     return True
 
 
 def lock_active_session():
+    """Ends any active play session. The bank is never touched."""
     session = read_session()
-
     session["active_session"] = {
         "status": "locked",
         "seconds_remaining": 0,
         "started_at": ""
     }
-
-    session["max_bank"] = MAX_BANK_MINUTES
-
     _atomic_write_session(session)
-
     print("[session.py] Active session locked. Bank preserved.")
-

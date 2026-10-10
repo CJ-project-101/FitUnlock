@@ -3,12 +3,20 @@ import subprocess
 import os
 import sys
 import platform
+import socket
 
 sys.path.append(os.path.dirname(__file__))
 
 from ui import FitPlayApp
-from session import init_db
+from session import init_db, lock_active_session
 
+# ─────────────────────────────────────────────────────────────
+# GLOBALS
+# ─────────────────────────────────────────────────────────────
+
+RESUME_EXISTING_GAME = False
+_instance_socket = None
+_game_process = None
 
 # ─────────────────────────────────────────────────────────────
 # PATHS
@@ -17,34 +25,39 @@ from session import init_db
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # ── UPDATE THIS ONE LINE once you name your game ──
-# Just the filename (without .exe) as it appears in unity_build/
-GAME_EXE_NAME = "Platformer_Wellness"   # e.g. change to "MyGameName" later
+GAME_EXE_NAME = "Platformer_Wellness"
 
 UNITY_BUILD_PATHS = {
-    "Windows": os.path.join(
-        BASE_DIR, "unity_build", f"{GAME_EXE_NAME}.exe"
-    ),
-    "Darwin": os.path.join(
-        BASE_DIR, "unity_build", f"{GAME_EXE_NAME}.app"
-    ),
-    "Linux": os.path.join(
-        BASE_DIR, "unity_build", GAME_EXE_NAME
-    ),
+    "Windows": os.path.join(BASE_DIR, "unity_build", f"{GAME_EXE_NAME}.exe"),
+    "Darwin": os.path.join(BASE_DIR, "unity_build", f"{GAME_EXE_NAME}.app"),
+    "Linux": os.path.join(BASE_DIR, "unity_build", GAME_EXE_NAME),
 }
 
-# This will hold the running game's process handle once launched,
-# so we don't have to guess window titles at all.
-_game_process = None
-
-
-# ─────────────────────────────────────────────────────────────
-# UNITY PATH
-# ─────────────────────────────────────────────────────────────
 
 def get_unity_path():
     """Returns the correct Unity executable path for the current OS."""
-    system = platform.system()
-    return UNITY_BUILD_PATHS.get(system)
+    return UNITY_BUILD_PATHS.get(platform.system())
+
+
+# ─────────────────────────────────────────────────────────────
+# SINGLE INSTANCE GUARD
+# ─────────────────────────────────────────────────────────────
+
+def acquire_single_instance(port=47653):
+    """
+    Binds a localhost port so only one FitPlay can run at a time.
+    The OS releases the port automatically if the process dies.
+    """
+    global _instance_socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.bind(("127.0.0.1", port))
+    except OSError:
+        s.close()
+        return False
+    s.listen(1)
+    _instance_socket = s      # keep a reference so it stays bound
+    return True
 
 
 # ─────────────────────────────────────────────────────────────
@@ -53,19 +66,15 @@ def get_unity_path():
 
 def is_game_running():
     """
-    Checks if the Unity game process is already running.
-    Prefers the tracked process handle (_game_process) since that's
-    exact and name-independent. Falls back to a name-based scan
-    only if this Python process didn't launch it (e.g. restarted mid-session).
+    Prefers the tracked process handle; falls back to a name-based scan
+    if this Python process didn't launch the game itself.
     """
     global _game_process
 
     if _game_process is not None:
-        # poll() returns None if still running, exit code otherwise
         if _game_process.poll() is None:
             return True
-        else:
-            _game_process = None  # process ended, clear the stale handle
+        _game_process = None   # process ended, clear the stale handle
 
     system = platform.system()
     game_name = f"{GAME_EXE_NAME}.exe" if system == "Windows" else GAME_EXE_NAME
@@ -73,19 +82,14 @@ def is_game_running():
     try:
         if system == "Windows":
             output = subprocess.check_output(
-                ["tasklist"],
-                text=True,
-                stderr=subprocess.DEVNULL
+                ["tasklist"], text=True, stderr=subprocess.DEVNULL
             )
             return game_name.lower() in output.lower()
         else:
             output = subprocess.check_output(
-                ["pgrep", "-f", game_name],
-                text=True,
-                stderr=subprocess.DEVNULL
+                ["pgrep", "-f", game_name], text=True, stderr=subprocess.DEVNULL
             )
             return bool(output.strip())
-
     except subprocess.CalledProcessError:
         return False
 
@@ -95,17 +99,12 @@ def is_game_running():
 # ─────────────────────────────────────────────────────────────
 
 def bring_game_to_front():
-    """
-    Windows-only: restores the existing Unity game window,
-    found by matching the PID of the process we launched —
-    no need to know or guess the window title/game name.
-    """
-
+    """Windows-only: restores the running game's window, found by PID."""
     if platform.system() != "Windows":
         return
 
     if _game_process is None:
-        print("[main.py] No tracked game process — cannot bring to front.")
+        print("[main.py] No tracked game process - cannot bring to front.")
         return
 
     try:
@@ -127,21 +126,18 @@ def bring_game_to_front():
             GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
             if pid.value == target_pid and IsWindowVisible(hwnd):
                 found_hwnd.append(hwnd)
-                return False  # stop enumerating, we found it
+                return False
             return True
 
         EnumWindows(EnumWindowsProc(enum_handler), 0)
 
         if found_hwnd:
             hwnd = found_hwnd[0]
-            ctypes.windll.user32.ShowWindow(hwnd, 9)  # SW_RESTORE
+            ctypes.windll.user32.ShowWindow(hwnd, 9)   # SW_RESTORE
             ctypes.windll.user32.SetForegroundWindow(hwnd)
             print("[main.py] Existing Unity game brought to front.")
         else:
-            print(
-                "[main.py] Game process is running, "
-                "but its window could not be found (still loading?)."
-            )
+            print("[main.py] Game process is running, but its window was not found.")
 
     except Exception as e:
         print(f"[main.py] Could not bring game to front: {e}")
@@ -154,29 +150,14 @@ def bring_game_to_front():
 def launch_game():
     global _game_process
 
-    # ---------------------------------------------------------
-    # If Unity started this Python process while paused,
-    # don't launch a second instance — the existing one
-    # will detect session.json on its own polling loop.
-    # ---------------------------------------------------------
-
+    # When Unity itself started this FitPlay, the game is already running
+    # and will pick up the new session on its own polling loop.
     if RESUME_EXISTING_GAME:
-        print("[main.py] Resume mode active.")
-        print(
-            "[main.py] Existing Unity instance will "
-            "detect the unlocked session."
-        )
+        print("[main.py] Resume mode - existing Unity instance will detect the session.")
         return
 
-    # ---------------------------------------------------------
-    # Normal mode
-    # ---------------------------------------------------------
-
     if is_game_running():
-        print(
-            "[main.py] Game already running — "
-            "bringing existing game to front."
-        )
+        print("[main.py] Game already running - bringing it to front.")
         bring_game_to_front()
         return
 
@@ -188,21 +169,16 @@ def launch_game():
 
     if not os.path.exists(game_path):
         print(f"[main.py] Game not found at: {game_path}")
-        print("[main.py] Build your Unity project first.")
         return
 
     print(f"[main.py] Launching game: {game_path}")
 
     system = platform.system()
-
     try:
-        if system == "Windows":
-            _game_process = subprocess.Popen([game_path])
-        elif system == "Darwin":
+        if system == "Darwin":
             _game_process = subprocess.Popen(["open", game_path])
-        elif system == "Linux":
+        else:
             _game_process = subprocess.Popen([game_path])
-
     except Exception as e:
         print(f"[main.py] Failed to launch game: {e}")
 
@@ -212,6 +188,7 @@ def launch_game():
 # ─────────────────────────────────────────────────────────────
 
 def on_app_close(root):
+    # Closing FitPlay must NOT touch the bank or the session.
     print("[main.py] FitPlay closing.")
     root.destroy()
 
@@ -223,49 +200,45 @@ def on_app_close(root):
 def main():
     global RESUME_EXISTING_GAME
 
+    # Must run first so a duplicate copy exits before touching any state.
+    if not acquire_single_instance():
+        print("[main.py] FitPlay is already running - closing this copy.")
+        return
+
     RESUME_EXISTING_GAME = "--resume-existing" in sys.argv
 
     print("=" * 50)
-    print("  FitPlay — Starting Up")
+    print("  FitPlay - Starting Up")
     print("=" * 50)
-
-    if RESUME_EXISTING_GAME:
-        print("[main.py] Started by Unity in RESUME mode.")
-    else:
-        print("[main.py] Started in NORMAL mode.")
+    print("[main.py] Started in RESUME mode." if RESUME_EXISTING_GAME
+          else "[main.py] Started in NORMAL mode.")
 
     # 1. Set up database
     init_db()
 
-    # 2. Lock old session only during normal startup
-    
+    # 2. Reset any leftover active play session on a fresh launch.
+    #    Never in resume mode, and this must NOT touch banked_seconds.
+    if not RESUME_EXISTING_GAME:
+        lock_active_session()
+
     # 3. Start Tkinter application
     root = tk.Tk()
 
     try:
-        app = FitPlayApp(
-            root,
-            on_unlock_callback=launch_game
-        )
+        app = FitPlayApp(root, on_unlock_callback=launch_game)
     except Exception as e:
         print(f"[main.py] UI ERROR: {e}")
-        input("Press Enter to close...")
+        if sys.stdin is not None:      # pythonw has no console
+            input("Press Enter to close...")
         return
 
-    # 4. Lock session when user closes Python app
-    root.protocol(
-        "WM_DELETE_WINDOW",
-        lambda: on_app_close(root)
-    )
+    root.protocol("WM_DELETE_WINDOW", lambda: on_app_close(root))
+
     print("[main.py] Starting Tkinter mainloop...")
     root.mainloop()
 
     print("[main.py] FitPlay closed.")
 
-
-# ─────────────────────────────────────────────────────────────
-# ENTRY POINT
-# ─────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     main()
