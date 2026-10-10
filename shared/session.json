@@ -1,6 +1,12 @@
 {
-    "status": "locked",
-    "minutes_earned": 0,
-    "activity_done": "",
-    "timestamp": ""
+  "status": "",
+  "minutes_earned": 0,
+  "activity_done": "",
+  "timestamp": "",
+  "banked_seconds": 0,
+  "active_session": {
+    "status": "unlocked",
+    "seconds_remaining": 60,
+    "started_at": "2026-10-10 21:09:50"
+  }
 }

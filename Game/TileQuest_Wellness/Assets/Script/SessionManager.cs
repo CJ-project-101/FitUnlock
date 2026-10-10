@@ -9,6 +9,8 @@ using UnityEngine.SceneManagement;
 public class SessionManager : MonoBehaviour
 {
     private static SessionManager instance;
+
+    private bool returnedTimeOnExit = false;
     
     [Header("UI References — drag these in from your scene")]
     public TMP_Text timerText;
@@ -27,6 +29,10 @@ public class SessionManager : MonoBehaviour
     private float timeRemaining = 0f;
     private bool gameUnlocked = false;
     private float pollTimer = 0f;
+
+    public int banked_seconds;
+    public int seconds_remaining;
+    public GameObject exitPanel;
 
     void Awake()
     {
@@ -94,41 +100,37 @@ public class SessionManager : MonoBehaviour
     }
 
     void ReadSession()
+{
+    if (!File.Exists(sessionPath))
     {
-        if (!File.Exists(sessionPath))
-        {
-            Debug.LogWarning("[SessionManager] session.json not found — showing locked screen.");
-            ShowLocked();
-            return;
-        }
+        ShowLocked();
+        return;
+    }
 
-        try
-        {
-            string json = File.ReadAllText(sessionPath);
-            SessionData data = JsonUtility.FromJson<SessionData>(json);
+    try
+    {
+        string json = File.ReadAllText(sessionPath);
+        SessionData data = JsonUtility.FromJson<SessionData>(json);
 
-            if (data != null && data.status == "unlocked" && data.minutes_earned > 0
-                && IsTimestampFresh(data.timestamp))
-            {
-                UnlockGame(data.minutes_earned);
-                ConsumeSession();
-            }
-            else
-            {
-                if (data != null && data.status == "unlocked" && !IsTimestampFresh(data.timestamp))
-                {
-                    Debug.LogWarning("[SessionManager] Stale unlock detected — ignoring and re-locking.");
-                    ForceLockSession();
-                }
-                ShowLocked();
-            }
-        }
-        catch (Exception e)
+        if (data != null &&
+            data.active_session != null &&
+            data.active_session.status == "unlocked" &&
+            data.active_session.seconds_remaining > 0 &&
+            IsTimestampFresh(data.active_session.started_at))
         {
-            Debug.LogError("[SessionManager] Failed to read session.json: " + e.Message);
+            UnlockGame(data.active_session.seconds_remaining);
+        }
+        else
+        {
             ShowLocked();
         }
     }
+    catch (Exception e)
+    {
+        Debug.LogError("[SessionManager] Failed to read session.json: " + e.Message);
+        ShowLocked();
+    }
+}
 
     bool IsTimestampFresh(string timestampStr)
     {
@@ -142,9 +144,10 @@ public class SessionManager : MonoBehaviour
         return secondsSinceWrite <= freshnessWindowSeconds;
     }
 
-    void UnlockGame(int minutesEarned)
+    void UnlockGame(int secondsRemaining)
     {
-        timeRemaining = minutesEarned * 60f;
+        timeRemaining = secondsRemaining;
+
         gameUnlocked = true;
 
         ResumeGame();
@@ -154,7 +157,7 @@ public class SessionManager : MonoBehaviour
         if (lockedPanel != null) lockedPanel.SetActive(false);
         if (playerMovementScript != null) playerMovementScript.enabled = true;
 
-        Debug.Log($"[SessionManager] Unlocked! {minutesEarned} minutes of playtime.");
+        Debug.Log($"[SessionManager] Unlocked! {secondsRemaining} seconds of playtime.");
     }
 
     void ShowLocked()
@@ -168,30 +171,9 @@ public class SessionManager : MonoBehaviour
         if (playerMovementScript != null) playerMovementScript.enabled = false;
     }
 
-    void ConsumeSession()
-    {
-        ForceLockSession();
-    }
+    
 
-    void ForceLockSession()
-    {
-        SessionData locked = new SessionData
-        {
-            status = "locked",
-            minutes_earned = 0,
-            activity_done = "",
-            timestamp = ""
-        };
-
-        try
-        {
-            File.WriteAllText(sessionPath, JsonUtility.ToJson(locked, true));
-        }
-        catch (Exception e)
-        {
-            Debug.LogError("[SessionManager] Failed to reset session.json: " + e.Message);
-        }
-    }
+    
 
     void PauseGame()
     {
@@ -215,15 +197,44 @@ public class SessionManager : MonoBehaviour
     timerText.text = $"{minutes:00}:{seconds:00}";
 }
 
+    
     void OnTimeExpired()
     {
-        Debug.Log("[SessionManager] Time's up! Pausing game and re-locking session.");
+        Debug.Log("[SessionManager] Time's up! Locking active session, bank preserved.");
+
         gameUnlocked = false;
 
-        ForceLockSession();
+        ForceLockActiveSession();
         ShowLocked();
         LaunchFitPlayApp();
     }
+
+void ForceLockActiveSession()
+{
+    try
+    {
+        string json = File.ReadAllText(sessionPath);
+        SessionData data = JsonUtility.FromJson<SessionData>(json);
+
+        data.active_session = new ActiveSession
+        {
+            status = "locked",
+            seconds_remaining = 0,
+            started_at = ""
+        };
+
+        File.WriteAllText(
+            sessionPath,
+            JsonUtility.ToJson(data, true)
+        );
+    }
+    catch (Exception e)
+    {
+        Debug.LogError(
+            "[SessionManager] Failed to lock active session: " + e.Message
+        );
+    }
+}
 
     void LaunchFitPlayApp()
     {
@@ -307,6 +318,66 @@ private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         lockedPanel = locked.gameObject;
 }
 
+private void ReturnUnusedTimeToBank()
+{
+    if (returnedTimeOnExit || !gameUnlocked || timeRemaining <= 0f)
+        return;
+
+    returnedTimeOnExit = true;
+
+    int secondsToReturn = Mathf.CeilToInt(timeRemaining);
+
+    try
+    {
+        string json = File.ReadAllText(sessionPath);
+        SessionData data = JsonUtility.FromJson<SessionData>(json);
+
+        if (data == null)
+            return;
+
+        data.banked_seconds = Mathf.Min(
+            data.banked_seconds + secondsToReturn,
+            3600
+        );
+
+        data.active_session = new ActiveSession
+        {
+            status = "locked",
+            seconds_remaining = 0,
+            started_at = ""
+        };
+
+        File.WriteAllText(sessionPath, JsonUtility.ToJson(data, true));
+
+        gameUnlocked = false;
+
+        Debug.Log($"[SessionManager] Returned {secondsToReturn} seconds.");
+    }
+    catch (Exception e)
+    {
+        Debug.LogError("[SessionManager] Return failed: " + e.Message);
+    }
+}
+
+private void OnApplicationQuit()
+{
+    ReturnUnusedTimeToBank();
+}
+
+public void ToggleExitMenu()
+{
+    if (exitPanel != null)
+        exitPanel.SetActive(!exitPanel.activeSelf);
+}
+
+public void ExitGame()
+{
+    ReturnUnusedTimeToBank();
+
+    Debug.Log("[SessionManager] Player exited game. Unused time returned.");
+
+    Application.Quit();
+}
 
 #if UNITY_STANDALONE_WIN 
     [System.Runtime.InteropServices.DllImport("user32.dll")] 
@@ -390,4 +461,16 @@ public class SessionData
     public int minutes_earned;
     public string activity_done;
     public string timestamp;
+
+    public int banked_seconds;
+
+    public ActiveSession active_session;
+}
+
+[Serializable]
+public class ActiveSession
+{
+    public string status;
+    public int seconds_remaining;
+    public string started_at;
 }

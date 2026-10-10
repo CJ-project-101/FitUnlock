@@ -6,7 +6,7 @@ import os
 sys.path.append(os.path.dirname(__file__))
 
 from exercises import run_squats, run_jumping_jacks, run_push_ups, run_walking, REWARDS
-from session import write_session, lock_session, init_db, get_total_minutes_today
+from session import add_minutes_to_bank, get_banked_seconds, start_play_session, lock_active_session, init_db, get_total_minutes_today
 
 
 # ── Color palette ──────────────────────────────────────────────────────────
@@ -32,9 +32,9 @@ class FitPlayApp:
         self.on_unlock_callback = on_unlock_callback
 
         self.root.title("FitPlay")
-        self.root.geometry("540x640")
+        self.root.geometry("540x760")
         self.root.configure(bg=BG_DARK)
-        self.root.resizable(False, False)
+        self.root.resizable(False, True)
 
         init_db()
         self.build_ui()
@@ -45,8 +45,7 @@ class FitPlayApp:
         header = tk.Frame(self.root, bg=BG_DARK)
         header.pack(fill="x", pady=(36, 0))
 
-        tk.Label(header, text="FITPLAY", font=("Segoe UI", 30, "bold"),
-                 bg=BG_DARK, fg=TEXT_MAIN).pack()
+        
 
         tk.Label(header, text="EARN YOUR PLAYTIME WITH REAL MOVEMENT",
                  font=("Segoe UI", 9, "bold"),
@@ -60,18 +59,28 @@ class FitPlayApp:
         inner = tk.Frame(stats_card, bg=BG_CARD)
         inner.pack(pady=16)
 
-        tk.Label(inner, text="MINUTES EARNED TODAY",
-                 font=("Segoe UI", 9, "bold"),
-                 bg=BG_CARD, fg=TEXT_DIM).pack()
+        tk.Label(
+                    inner,
+                    text="MINUTES AVAILABLE TO PLAY",
+                    font=("Segoe UI", 9, "bold"),
+                    bg=BG_CARD,
+                    fg=TEXT_DIM
+                ).pack()
+
+        banked_seconds = get_banked_seconds()
 
         self.stats_value_label = tk.Label(
-            inner, text=str(get_total_minutes_today()),
-            font=("Segoe UI", 34, "bold"), bg=BG_CARD, fg=ACCENT_TEAL)
+            inner,
+            text=f"{banked_seconds // 60}:{banked_seconds % 60:02d}",
+            font=("Segoe UI", 34, "bold"),
+            bg=BG_CARD,
+            fg=ACCENT_TEAL
+        )
         self.stats_value_label.pack()
 
         # ── Activity buttons ──
         activities_frame = tk.Frame(self.root, bg=BG_DARK)
-        activities_frame.pack(fill="both", expand=True, padx=40)
+        activities_frame.pack(fill="x", padx=40)
 
         self._make_activity_card(
             activities_frame, "🏋", "Squats",
@@ -92,6 +101,24 @@ class FitPlayApp:
             activities_frame, "🚶", "Walk",
             "5 min  →  30 min",
             ACCENT_TEAL, ACCENT_TEAL_H, self.do_walking)
+
+        tk.Label(
+            self.root,
+            text=f"Banked: {get_banked_seconds() // 60}:{get_banked_seconds() % 60:02d} / 60:00",
+            font=("Segoe UI", 14, "bold"),
+            bg=BG_DARK,
+            fg=ACCENT_TEAL
+        ).pack(pady=10)
+
+        tk.Button(
+            self.root,
+            text="▶ Play Game",
+            bg=ACCENT_TEAL,
+            fg="white",
+            font=("Segoe UI", 13, "bold"),
+            command=self.do_play_game,
+            cursor="hand2"
+        ).pack(pady=10)
 
         # ── Status bar ──
         self.status_label = tk.Label(self.root, text="Pick an activity to get started",
@@ -158,11 +185,14 @@ class FitPlayApp:
         success, minutes_earned = run_walking(target_minutes=5)
 
         if success:
-            write_session(minutes_earned=minutes_earned,
-                          activity="walking",
-                          reps_or_minutes=f"{minutes_earned/6:.1f} min walked")
-            self._set_status(f"✅ Walked enough! You earned {minutes_earned} minutes.", SUCCESS)
-            self._trigger_unlock(minutes_earned)
+            new_total = add_minutes_to_bank(minutes_earned)
+
+            self._set_status(
+                f"✅ Walked enough! {minutes_earned} min banked. Total: {new_total} min.",
+                SUCCESS
+            )
+
+            self._refresh_stats()
         else:
             self._set_status("❌ Didn't walk long enough. Try again!", ERROR)
 
@@ -174,23 +204,32 @@ class FitPlayApp:
         self.root.deiconify()
 
         if success:
-            write_session(minutes_earned=minutes_reward,
-                          activity=activity_name,
-                          reps_or_minutes=reps_done)
+            new_total = add_minutes_to_bank(minutes_reward)
+
             self._set_status(
-                f"✅ Great job! {reps_done} reps done — you earned {minutes_reward} minutes.",
-                SUCCESS)
-            self._trigger_unlock(minutes_reward)
+                f"✅ Great job! {reps_done} reps done — "
+                f"{minutes_reward} min banked. Total: {new_total} min.",
+                SUCCESS
+        )
+
+            self._refresh_stats()
         else:
-            self._set_status(f"❌ Only completed {reps_done} reps. Try again to earn time!", ERROR)
+            self._set_status(
+                f"❌ Only completed {reps_done} reps. Try again!",
+                ERROR
+        )
 
     def _set_status(self, text, color):
         self.status_label.config(text=text, fg=color)
         self.root.update_idletasks()
 
     def _refresh_stats(self):
-        """Re-reads the DB and updates the on-screen counter immediately."""
-        self.stats_value_label.config(text=str(get_total_minutes_today()))
+        banked_seconds = get_banked_seconds()
+        minutes = banked_seconds // 60
+        seconds = banked_seconds % 60
+
+        self.stats_value_label.config(text=f"{minutes}:{seconds:02d}")
+                
         self.root.update_idletasks()
 
     # ========================================================
@@ -245,6 +284,46 @@ class FitPlayApp:
                 f"✅ Unlocked! You earned {minutes_earned} minutes.",
                 SUCCESS
             )
+
+    def do_play_game(self):
+        print("[ui.py] PLAY GAME BUTTON CLICKED!")
+
+        banked_seconds = get_banked_seconds()
+        print(f"[ui.py] Banked seconds: {banked_seconds}")
+
+        if banked_seconds <= 0:
+            self._set_status(
+                "No playtime available — complete an exercise first!",
+                ERROR
+            )
+            return
+
+        success = start_play_session(banked_seconds)
+
+        if not success:
+            self._set_status("Could not start game session.", ERROR)
+            return
+
+        print(f"[ui.py] Starting game with {banked_seconds} seconds.")
+
+        self._set_status(
+            f"Starting game with {banked_seconds // 60}:{banked_seconds % 60:02d}...",
+            SUCCESS
+        )
+
+        if self.on_unlock_callback:
+            print("[ui.py] Calling launch_game...")
+
+            try:
+                self.on_unlock_callback()
+            except Exception as e:
+                print(f"[ui.py] Launch failed: {e}")
+                messagebox.showerror("Game Launch Error", str(e))
+                return
+
+            self.root.after(500, self.root.destroy)
+        else:
+            print("[ui.py] ERROR: on_unlock_callback is None!")
 
 # ── Run standalone for testing ──────────────────────────────────────────────
 if __name__ == "__main__":

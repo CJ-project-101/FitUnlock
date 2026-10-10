@@ -7,7 +7,7 @@ import platform
 sys.path.append(os.path.dirname(__file__))
 
 from ui import FitPlayApp
-from session import lock_session, init_db
+from session import init_db
 
 
 # ─────────────────────────────────────────────────────────────
@@ -212,8 +212,7 @@ def launch_game():
 # ─────────────────────────────────────────────────────────────
 
 def on_app_close(root):
-    print("[main.py] FitPlay closing. Locking session for safety.")
-    lock_session()
+    print("[main.py] FitPlay closing.")
     root.destroy()
 
 
@@ -239,23 +238,26 @@ def main():
     init_db()
 
     # 2. Lock old session only during normal startup
-    if not RESUME_EXISTING_GAME:
-        lock_session()
-
+    
     # 3. Start Tkinter application
     root = tk.Tk()
 
-    app = FitPlayApp(
-        root,
-        on_unlock_callback=launch_game
-    )
+    try:
+        app = FitPlayApp(
+            root,
+            on_unlock_callback=launch_game
+        )
+    except Exception as e:
+        print(f"[main.py] UI ERROR: {e}")
+        input("Press Enter to close...")
+        return
 
     # 4. Lock session when user closes Python app
     root.protocol(
         "WM_DELETE_WINDOW",
         lambda: on_app_close(root)
     )
-
+    print("[main.py] Starting Tkinter mainloop...")
     root.mainloop()
 
     print("[main.py] FitPlay closed.")
