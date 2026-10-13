@@ -8,6 +8,8 @@ import socket
 sys.path.append(os.path.dirname(__file__))
 
 from ui import FitPlayApp
+from login_ui import LoginScreen                                  # NEW
+from auth import restore_session, clear_session                   # NEW
 from session import init_db, lock_active_session
 
 # ─────────────────────────────────────────────────────────────
@@ -189,8 +191,55 @@ def launch_game():
 
 def on_app_close(root):
     # Closing FitPlay must NOT touch the bank or the session.
+    # (It also keeps the saved login, so the next launch skips the login screen.)
     print("[main.py] FitPlay closing.")
     root.destroy()
+
+
+# ─────────────────────────────────────────────────────────────
+# LOGIN / LOGOUT FLOW                                         (NEW)
+# ─────────────────────────────────────────────────────────────
+
+def start_app(root, uid, email):
+    """Swaps whatever is on screen for the main FitPlay UI. Returns True on success."""
+    for widget in root.winfo_children():
+        widget.destroy()
+    root.geometry("")          # drop the login window's fixed size
+
+    try:
+        app = FitPlayApp(root, on_unlock_callback=launch_game, uid=uid, email=email,
+                         on_logout=lambda: do_logout(root))
+        root.fitplay_app = app     # keep a reference alive for the whole mainloop
+        return True
+    except Exception as e:
+        print(f"[main.py] UI ERROR: {e}")
+        if sys.stdin is not None:      # pythonw has no console
+            input("Press Enter to close...")
+        root.destroy()
+        return False
+
+
+def show_login(root):
+    """Shows the login screen. Returns True on success."""
+    try:
+        LoginScreen(root, on_login_success=lambda uid, email: start_app(root, uid, email))
+        return True
+    except Exception as e:
+        print(f"[main.py] LOGIN ERROR: {e}")
+        if sys.stdin is not None:      # pythonw has no console
+            input("Press Enter to close...")
+        root.destroy()
+        return False
+
+
+def do_logout(root):
+    """Forgets the saved login and returns to the login screen.
+    Does NOT touch the local bank or the play session."""
+    print("[main.py] Logging out.")
+    clear_session()
+    for widget in root.winfo_children():
+        widget.destroy()
+    show_login(root)
 
 
 # ─────────────────────────────────────────────────────────────
@@ -221,18 +270,27 @@ def main():
     if not RESUME_EXISTING_GAME:
         lock_active_session()
 
-    # 3. Start Tkinter application
+    # 3. Start Tkinter application                              (CHANGED)
     root = tk.Tk()
-
-    try:
-        app = FitPlayApp(root, on_unlock_callback=launch_game)
-    except Exception as e:
-        print(f"[main.py] UI ERROR: {e}")
-        if sys.stdin is not None:      # pythonw has no console
-            input("Press Enter to close...")
-        return
-
     root.protocol("WM_DELETE_WINDOW", lambda: on_app_close(root))
+
+    # Skip the login screen when a saved login is still valid
+    root.withdraw()                    # no blank window while we check
+    try:
+        saved = restore_session()
+    except Exception as e:
+        print(f"[main.py] Could not restore saved login: {e}")
+        saved = None
+    root.deiconify()
+
+    if saved:
+        print("[main.py] Saved login found - skipping login screen.")
+        started = start_app(root, saved[0], saved[1])
+    else:
+        started = show_login(root)
+
+    if not started:
+        return
 
     print("[main.py] Starting Tkinter mainloop...")
     root.mainloop()

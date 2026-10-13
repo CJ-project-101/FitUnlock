@@ -2,11 +2,15 @@ import tkinter as tk
 from tkinter import messagebox
 import sys
 import os
+import threading
+import traceback                                              # NEW
 
 sys.path.append(os.path.dirname(__file__))
 
 from exercises import run_squats, run_jumping_jacks, run_push_ups, run_walking, REWARDS
 from session import add_minutes_to_bank, get_banked_seconds, start_play_session, init_db
+from auth import update_leaderboard_stats
+from leaderboard_ui import LeaderboardWindow
 
 
 # ── Color palette ──────────────────────────────────────────────────────────
@@ -35,9 +39,13 @@ def fmt(seconds):
 
 
 class FitPlayApp:
-    def __init__(self, root, on_unlock_callback=None):
+    def __init__(self, root, on_unlock_callback=None, uid=None, email=None,
+                 on_logout=None):                              # CHANGED
         self.root = root
         self.on_unlock_callback = on_unlock_callback
+        self.uid = uid
+        self.email = email
+        self.on_logout = on_logout                             # NEW
         self._starting_game = False     # blocks double-clicks on Play
 
         self.root.title("FitPlay")
@@ -53,11 +61,24 @@ class FitPlayApp:
     def build_ui(self):
         # ── Header ──
         header = tk.Frame(self.root, bg=BG_DARK)
-        header.pack(fill="x", pady=(36, 0))
+        header.pack(fill="x", pady=(14, 0))                    # CHANGED (was 36) to make room for the account row
+
+        # NEW: account row — signed-in email on the left, Log out on the right
+        account_row = tk.Frame(header, bg=BG_DARK)
+        account_row.pack(fill="x", padx=40)
+
+        if self.email:
+            tk.Label(account_row, text=self.email, font=("Segoe UI", 9),
+                     bg=BG_DARK, fg=TEXT_DIM).pack(side="left")
+
+        if self.on_logout:
+            tk.Button(account_row, text="Log out", font=("Segoe UI", 9, "bold"),
+                      bg=BG_CARD, fg=TEXT_MAIN, bd=0, padx=10, pady=3,
+                      cursor="hand2", command=self.do_logout).pack(side="right")
 
         tk.Label(header, text="EARN YOUR PLAYTIME WITH REAL MOVEMENT",
                  font=("Segoe UI", 9, "bold"),
-                 bg=BG_DARK, fg=ACCENT_PINK).pack(pady=(4, 0))
+                 bg=BG_DARK, fg=ACCENT_PINK).pack(pady=(14, 0))   # CHANGED (was 4)
 
         # ── Stats card ──
         stats_card = tk.Frame(self.root, bg=BG_CARD, highlightthickness=1,
@@ -107,12 +128,23 @@ class FitPlayApp:
             font=("Segoe UI", 14, "bold"), bg=BG_DARK, fg=ACCENT_TEAL)
         self.bank_label.pack(pady=10)
 
+        # Play and Leaderboard share one row so the window height is unchanged
+        button_row = tk.Frame(self.root, bg=BG_DARK)
+        button_row.pack(pady=10)
+
         tk.Button(
-            self.root, text="▶ Play Game",
+            button_row, text="▶ Play Game",
             bg=ACCENT_TEAL, fg="white",
             font=("Segoe UI", 13, "bold"),
             command=self.do_play_game, cursor="hand2"
-        ).pack(pady=10)
+        ).pack(side="left", padx=(0, 10))
+
+        tk.Button(
+            button_row, text="🏆 Leaderboard",
+            bg=BG_CARD, fg=TEXT_MAIN,
+            font=("Segoe UI", 13, "bold"),
+            command=self.show_leaderboard, cursor="hand2"
+        ).pack(side="left")
 
         # ── Status bar ──
         self.status_label = tk.Label(
@@ -179,12 +211,17 @@ class FitPlayApp:
         self.root.withdraw()
         try:
             success, minutes_earned = run_walking(target_minutes=5)
+        except Exception as e:                                          # NEW
+            traceback.print_exc()
+            self._set_status(f"❌ Walking could not start: {e}", ERROR)
+            return
         finally:
             self.root.deiconify()
 
         if success:
             new_total = add_minutes_to_bank(
                 minutes_earned, "walking", f"{minutes_earned / 6:.1f} min walked")
+            self._sync_leaderboard("walking", minutes_earned)
             self._set_status(
                 f"✅ Walked enough! {minutes_earned} min banked. "
                 f"Total: {fmt(new_total)}.", SUCCESS)
@@ -199,11 +236,19 @@ class FitPlayApp:
         self.root.withdraw()
         try:
             success, reps_done = exercise_func()
+        except Exception as e:                                          # NEW
+            # Previously an error here (e.g. camera or MediaPipe problem) only
+            # appeared in the terminal and the button seemed to do nothing.
+            traceback.print_exc()
+            self._set_status(
+                f"❌ {activity_name.replace('_', ' ').title()} could not start: {e}", ERROR)
+            return
         finally:
             self.root.deiconify()      # always bring the window back
 
         if success:
             new_total = add_minutes_to_bank(minutes_reward, activity_name, reps_done)
+            self._sync_leaderboard(activity_name, minutes_reward)
             self._set_status(
                 f"✅ Great job! {reps_done} reps done — "
                 f"{minutes_reward} min banked. Total: {fmt(new_total)}.", SUCCESS)
@@ -243,6 +288,29 @@ class FitPlayApp:
         else:
             print("[ui.py] on_unlock_callback is None - nothing to launch.")
             self._starting_game = False
+
+    # ── Account (NEW) ──────────────────────────────────────────────────────
+    def do_logout(self):
+        if self._starting_game:
+            return
+        if messagebox.askyesno("Log out", "Log out of FitPlay on this computer?"):
+            if self.on_logout:
+                self.root.after(0, self.on_logout)    # run after this click finishes
+
+    # ── Leaderboard ────────────────────────────────────────────────────────
+    def show_leaderboard(self):
+        LeaderboardWindow(self.root, self.uid)
+
+    def _sync_leaderboard(self, activity_name, minutes):
+        """Pushes the result to the cloud in the background. The local bank is the
+        source of truth, so a network failure never blocks or undoes banking."""
+        if not self.uid:
+            return
+        threading.Thread(
+            target=update_leaderboard_stats,
+            args=(self.uid, activity_name, minutes),
+            daemon=True,
+        ).start()
 
     # ── Helpers ────────────────────────────────────────────────────────────
     def _set_status(self, text, color):

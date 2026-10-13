@@ -5,6 +5,8 @@ using ProcessStartInfo = System.Diagnostics.ProcessStartInfo;
 using UnityEngine;
 using TMPro;
 using UnityEngine.SceneManagement;
+using UnityEngine.InputSystem;
+using UnityEngine.EventSystems;
 
 public class SessionManager : MonoBehaviour
 {
@@ -30,6 +32,12 @@ public class SessionManager : MonoBehaviour
     public float pollIntervalSeconds = 1.0f;
     public float freshnessWindowSeconds = 60f;
 
+    [Header("Exit menu")]
+    public string exitButtonName = "ExitButton";   // the button a controller will highlight
+    public bool pauseWhileMenuOpen = true;         // the timer freezes while the menu is open
+
+    public bool IsExitMenuOpen => exitPanel != null && exitPanel.activeInHierarchy;
+
     private string sessionPath;
     private string projectRoot;
     private float timeRemaining = 0f;
@@ -42,6 +50,10 @@ public class SessionManager : MonoBehaviour
     {
         if (instance != null && instance != this)
         {
+            instance = this;
+            Debug.Log("[SessionManager] Instance assigned: " + gameObject.name);
+
+            DontDestroyOnLoad(gameObject);
             enabled = false;            // stops Start()/Update() on the duplicate
             Destroy(gameObject);
             return;
@@ -98,6 +110,8 @@ public class SessionManager : MonoBehaviour
 
     void Update()
     {
+        HandleMenuHotkeys();
+
         pollTimer += Time.unscaledDeltaTime;
         if (pollTimer >= pollIntervalSeconds)
         {
@@ -345,7 +359,10 @@ public class SessionManager : MonoBehaviour
     public void ToggleExitMenu()
     {
         if (exitPanel != null) exitPanel.SetActive(!exitPanel.activeSelf);
+        
     }
+
+   
 
     public void ExitGame()
     {
@@ -353,6 +370,35 @@ public class SessionManager : MonoBehaviour
         Debug.Log("[SessionManager] Player exited game.");
         Application.Quit();
     }
+
+    void HandleMenuHotkeys()
+{
+    bool escape = Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame;
+    bool start  = Gamepad.current  != null && Gamepad.current.startButton.wasPressedThisFrame;
+
+    if (escape || start) ToggleExitMenu();
+}
+
+
+
+void SetExitMenu(bool open)
+{
+    exitPanel.SetActive(open);
+
+    // Freeze the countdown while the menu is open, but only during an active session.
+    if (pauseWhileMenuOpen && gameUnlocked)
+    {
+        Time.timeScale = open ? 0f : 1f;
+        AudioListener.pause = open;
+    }
+
+    // Highlight the Exit button so a controller can press it with A.
+    if (open && EventSystem.current != null)
+    {
+        GameObject btn = FindInScene(SceneManager.GetActiveScene(), exitButtonName);
+        EventSystem.current.SetSelectedGameObject(btn);
+    }
+}
 
     // ── FitPlay launching ──────────────────────────────────────────────────
     public void OpenFitPlay()
@@ -394,58 +440,60 @@ public class SessionManager : MonoBehaviour
     // ── Windows: bring the game window to the front ───────────────────────
     void RestoreUnityWindow()
     {
-#if UNITY_STANDALONE_WIN
-        IntPtr hwnd = GetUnityWindow();
+    #if UNITY_STANDALONE_WIN
+            IntPtr hwnd = GetUnityWindow();
 
-        if (hwnd != IntPtr.Zero)
-        {
-            ShowWindow(hwnd, SW_RESTORE);
-            SetForegroundWindow(hwnd);
-        }
-#endif
-    }
-
-#if UNITY_STANDALONE_WIN
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
-    static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
-
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
-    static extern bool SetForegroundWindow(IntPtr hWnd);
-
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
-    static extern bool IsWindowVisible(IntPtr hWnd);
-
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
-    static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
-
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
-    static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
-
-    delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
-
-    const int SW_RESTORE = 9;
-
-    IntPtr GetUnityWindow()
-    {
-        IntPtr result = IntPtr.Zero;
-        uint currentProcessId = (uint)Process.GetCurrentProcess().Id;
-
-        EnumWindows((hWnd, lParam) =>
-        {
-            GetWindowThreadProcessId(hWnd, out uint windowProcessId);
-
-            if (windowProcessId == currentProcessId && IsWindowVisible(hWnd))
+            if (hwnd != IntPtr.Zero)
             {
-                result = hWnd;
-                return false;
+                ShowWindow(hwnd, SW_RESTORE);
+                SetForegroundWindow(hwnd);
             }
-            return true;
-        }, IntPtr.Zero);
+    #endif
+        }
 
-        return result;
+    #if UNITY_STANDALONE_WIN
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        static extern bool SetForegroundWindow(IntPtr hWnd);
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        static extern bool IsWindowVisible(IntPtr hWnd);
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
+
+        delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+
+        const int SW_RESTORE = 9;
+
+        IntPtr GetUnityWindow()
+        {
+            IntPtr result = IntPtr.Zero;
+            uint currentProcessId = (uint)Process.GetCurrentProcess().Id;
+
+            EnumWindows((hWnd, lParam) =>
+            {
+                GetWindowThreadProcessId(hWnd, out uint windowProcessId);
+
+                if (windowProcessId == currentProcessId && IsWindowVisible(hWnd))
+                {
+                    result = hWnd;
+                    return false;
+                }
+                return true;
+            }, IntPtr.Zero);
+
+            return result;
+        }
+    #endif
     }
-#endif
-}
+
+    
 
 [Serializable]
 public class SessionData

@@ -17,7 +17,7 @@ echo.
 echo Starting FitPlay Unity game...
 echo.
 
-start "" "D:\Major project\unity_build\Platformer_Wellness.exe"
+
 
 echo.
 echo ==========================================
