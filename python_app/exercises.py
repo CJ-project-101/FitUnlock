@@ -5,6 +5,7 @@ import os
 
 sys.path.append(os.path.dirname(__file__))
 from pose_detector import PoseDetector, Joint
+from liveness import LivenessGuard, verify_joints                  # NEW
 
 
 # ── Minutes earned per activity ──────────────────────────────────────────────
@@ -14,6 +15,14 @@ REWARDS = {
     "push_ups":      {"reps": 1,  "minutes": 1},
     "arm_raises":    {"reps": 12, "minutes": 10},
 }
+
+# ── Why the last exercise was rejected (read by ui.py)  (NEW) ────────────────
+LAST_FAILURE_REASON = ""
+
+
+def get_last_failure():
+    """Empty string unless the last camera exercise was rejected by the liveness check."""
+    return LAST_FAILURE_REASON
 
 
 # ── Shared overlay helper ─────────────────────────────────────────────────────
@@ -68,9 +77,14 @@ def draw_hud(frame, exercise_name, count, target, stage, angle_text="", instruct
 #    squatted  → knee angle ~62.9°  (threshold < 110  = "down")
 # ─────────────────────────────────────────────────────────────────────────────
 def run_squats():
+    global LAST_FAILURE_REASON                                     # NEW
+    LAST_FAILURE_REASON = ""                                       # NEW
+    verify_joints()                                                # NEW (fails before the camera opens)
+
     TARGET   = REWARDS["squats"]["reps"]
     cap      = cv2.VideoCapture(0)
     detector = PoseDetector()
+    guard    = LivenessGuard(detector, TARGET)                     # NEW
     count    = 0
     stage    = None          # "up" or "down"
 
@@ -88,7 +102,11 @@ def run_squats():
         frame    = detector.process_frame(frame)
         angle_txt = ""
 
-        if detector.is_person_detected():
+        guard.update(count)                                        # NEW
+        if guard.pop_resume_flag():                                # NEW
+            stage = None                                           # NEW
+
+        if detector.is_person_detected() and not guard.challenge_active:   # CHANGED
             knee_angle = detector.get_angle(
                 Joint.LEFT_HIP, Joint.LEFT_KNEE, Joint.LEFT_ANKLE
             )
@@ -105,9 +123,21 @@ def run_squats():
                     print(f"  Squat rep {count} ✓")
 
         frame = draw_hud(frame, "Squats", count, TARGET, stage or "---", angle_txt)
+        frame = guard.draw(frame)                                  # NEW
+
+        # ── Liveness failed ────────────────────────────────────────────────  (NEW)
+        if guard.failed:
+            LAST_FAILURE_REASON = guard.failure_reason
+            print("  Liveness check failed - set rejected.")
+            cv2.putText(frame, "LIVENESS CHECK FAILED",
+                        (40, 260), cv2.FONT_HERSHEY_SIMPLEX,
+                        1.3, (0, 0, 255), 3)
+            cv2.imshow("FitPlay — Squats", frame)
+            cv2.waitKey(2000)
+            break
 
         # ── Completion flash ───────────────────────────────────────────────
-        if count >= TARGET:
+        if count >= TARGET and guard.passed:                       # CHANGED
             cv2.putText(frame, "DONE! Great work!",
                         (100, 260), cv2.FONT_HERSHEY_SIMPLEX,
                         2.0, (0, 255, 0), 4)
@@ -123,7 +153,7 @@ def run_squats():
     cap.release()
     cv2.destroyAllWindows()
 
-    success = count >= TARGET
+    success = count >= TARGET and guard.passed                     # CHANGED
     return success, count
 
 
@@ -134,9 +164,14 @@ def run_squats():
 #  (y-axis is flipped in image: smaller y = higher on screen)
 # ─────────────────────────────────────────────────────────────────────────────
 def run_jumping_jacks():
+    global LAST_FAILURE_REASON                                     # NEW
+    LAST_FAILURE_REASON = ""                                       # NEW
+    verify_joints()                                                # NEW
+
     TARGET   = REWARDS["jumping_jacks"]["reps"]
     cap      = cv2.VideoCapture(0)
     detector = PoseDetector()
+    guard    = LivenessGuard(detector, TARGET)                     # NEW
     count    = 0
     stage    = None
 
@@ -154,7 +189,11 @@ def run_jumping_jacks():
         frame    = detector.process_frame(frame)
         info_txt = ""
 
-        if detector.is_person_detected():
+        guard.update(count)                                        # NEW
+        if guard.pop_resume_flag():                                # NEW
+            stage = None                                           # NEW
+
+        if detector.is_person_detected() and not guard.challenge_active:   # CHANGED
             left_shoulder  = detector.get_landmark(Joint.LEFT_SHOULDER)
             left_wrist     = detector.get_landmark(Joint.LEFT_WRIST)
             left_hip       = detector.get_landmark(Joint.LEFT_HIP)
@@ -195,8 +234,20 @@ def run_jumping_jacks():
                     print(f"  Jumping jack rep {count} ✓")
 
         frame = draw_hud(frame, "Jumping Jacks", count, TARGET, stage or "---", info_txt)
+        frame = guard.draw(frame)                                  # NEW
 
-        if count >= TARGET:
+        # ── Liveness failed ────────────────────────────────────────────────  (NEW)
+        if guard.failed:
+            LAST_FAILURE_REASON = guard.failure_reason
+            print("  Liveness check failed - set rejected.")
+            cv2.putText(frame, "LIVENESS CHECK FAILED",
+                        (40, 260), cv2.FONT_HERSHEY_SIMPLEX,
+                        1.3, (0, 0, 255), 3)
+            cv2.imshow("FitPlay — Jumping Jacks", frame)
+            cv2.waitKey(2000)
+            break
+
+        if count >= TARGET and guard.passed:                       # CHANGED
             cv2.putText(frame, "DONE! Great work!",
                         (100, 260), cv2.FONT_HERSHEY_SIMPLEX,
                         2.0, (0, 255, 0), 4)
@@ -212,7 +263,7 @@ def run_jumping_jacks():
     cap.release()
     cv2.destroyAllWindows()
 
-    success = count >= TARGET
+    success = count >= TARGET and guard.passed                     # CHANGED
     return success, count
 
 
@@ -221,11 +272,21 @@ def run_jumping_jacks():
 #  Uses elbow angle:
 #    arms straight (up position)  → angle > 155°
 #    chest near floor (down)      → angle < 90°
+#  Liveness: push-ups are done sideways on the floor, so there is no mid-set
+#  challenge. After the last rep the user must STAND UP, face the camera and
+#  perform the requested gesture.
 # ─────────────────────────────────────────────────────────────────────────────
 def run_push_ups():
+    global LAST_FAILURE_REASON                                     # NEW
+    LAST_FAILURE_REASON = ""                                       # NEW
+    verify_joints()                                                # NEW
+
     TARGET   = REWARDS["push_ups"]["reps"]
     cap      = cv2.VideoCapture(0)
     detector = PoseDetector()
+    guard    = LivenessGuard(detector, TARGET, mid_check=False,    # liveness
+                             intro="Stand up and face the camera",
+                             monitor_orientation=False)
     count    = 0
     stage    = None
 
@@ -244,7 +305,11 @@ def run_push_ups():
         frame    = detector.process_frame(frame)
         angle_txt = ""
 
-        if detector.is_person_detected():
+        guard.update(count)                                        # NEW
+        if guard.pop_resume_flag():                                # NEW
+            stage = None                                           # NEW
+
+        if detector.is_person_detected() and not guard.challenge_active:   # CHANGED
             elbow_angle = detector.get_angle(
                 Joint.LEFT_SHOULDER, Joint.LEFT_ELBOW, Joint.LEFT_WRIST
             )
@@ -261,8 +326,20 @@ def run_push_ups():
 
         frame = draw_hud(frame, "Push-Ups", count, TARGET, stage or "---", angle_txt,
                           instruction_text="Position yourself sideways to the camera")
+        frame = guard.draw(frame)                                  # NEW
 
-        if count >= TARGET:
+        # ── Liveness failed ────────────────────────────────────────────────  (NEW)
+        if guard.failed:
+            LAST_FAILURE_REASON = guard.failure_reason
+            print("  Liveness check failed - set rejected.")
+            cv2.putText(frame, "LIVENESS CHECK FAILED",
+                        (40, 260), cv2.FONT_HERSHEY_SIMPLEX,
+                        1.3, (0, 0, 255), 3)
+            cv2.imshow("FitPlay — Push-Ups", frame)
+            cv2.waitKey(2000)
+            break
+
+        if count >= TARGET and guard.passed:                       # CHANGED
             cv2.putText(frame, "DONE! Great work!",
                         (100, 260), cv2.FONT_HERSHEY_SIMPLEX,
                         2.0, (0, 255, 0), 4)
@@ -278,7 +355,7 @@ def run_push_ups():
     cap.release()
     cv2.destroyAllWindows()
 
-    success = count >= TARGET
+    success = count >= TARGET and guard.passed                     # CHANGED
     return success, count
 
 
@@ -332,3 +409,4 @@ if __name__ == "__main__":
         print(f"\nResult: {'SUCCESS' if ok else 'incomplete'} — {earned} min earned")
     else:
         print("Invalid choice")
+        

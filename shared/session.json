@@ -1,9 +1,9 @@
 {
-    "banked_seconds": 70,
-    "max_bank_seconds": 3600,
-    "active_session": {
-        "status": "locked",
-        "seconds_remaining": 0,
-        "started_at": ""
-    }
+  "banked_seconds": 2272,
+  "max_bank_seconds": 3600,
+  "active_session": {
+    "status": "locked",
+    "seconds_remaining": 0,
+    "started_at": ""
+  }
 }

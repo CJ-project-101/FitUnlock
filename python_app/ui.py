@@ -3,7 +3,7 @@ from tkinter import messagebox
 import sys
 import os
 import threading
-import traceback                                              # NEW
+import traceback
 
 sys.path.append(os.path.dirname(__file__))
 
@@ -29,7 +29,9 @@ TEXT_DIM        = "#8a8a9e"
 SUCCESS         = "#0fd8a8"
 ERROR           = "#ff5e7a"
 
-BANK_POLL_MS = 1000    # how often the bank display re-reads session.json
+BANK_POLL_MS = 1000       # how often the bank display re-reads session.json
+GAME_START_GRACE_MS = 3000   # NEW: give the game time to appear before we start checking it
+GAME_CHECK_MS = 2000         # NEW: how often we check whether the game has closed
 
 
 def fmt(seconds):
@@ -40,13 +42,15 @@ def fmt(seconds):
 
 class FitPlayApp:
     def __init__(self, root, on_unlock_callback=None, uid=None, email=None,
-                 on_logout=None):                              # CHANGED
+                 on_logout=None, is_game_running=None):            # CHANGED
         self.root = root
         self.on_unlock_callback = on_unlock_callback
         self.uid = uid
         self.email = email
-        self.on_logout = on_logout                             # NEW
+        self.on_logout = on_logout
+        self.is_game_running = is_game_running                     # NEW
         self._starting_game = False     # blocks double-clicks on Play
+        self._waiting_for_game = False                             # NEW
 
         self.root.title("FitPlay")
         self.root.geometry("540x760")
@@ -61,9 +65,9 @@ class FitPlayApp:
     def build_ui(self):
         # ── Header ──
         header = tk.Frame(self.root, bg=BG_DARK)
-        header.pack(fill="x", pady=(14, 0))                    # CHANGED (was 36) to make room for the account row
+        header.pack(fill="x", pady=(14, 0))
 
-        # NEW: account row — signed-in email on the left, Log out on the right
+        # Account row: signed-in email on the left, Log out on the right
         account_row = tk.Frame(header, bg=BG_DARK)
         account_row.pack(fill="x", padx=40)
 
@@ -78,7 +82,7 @@ class FitPlayApp:
 
         tk.Label(header, text="EARN YOUR PLAYTIME WITH REAL MOVEMENT",
                  font=("Segoe UI", 9, "bold"),
-                 bg=BG_DARK, fg=ACCENT_PINK).pack(pady=(14, 0))   # CHANGED (was 4)
+                 bg=BG_DARK, fg=ACCENT_PINK).pack(pady=(14, 0))
 
         # ── Stats card ──
         stats_card = tk.Frame(self.root, bg=BG_CARD, highlightthickness=1,
@@ -211,7 +215,7 @@ class FitPlayApp:
         self.root.withdraw()
         try:
             success, minutes_earned = run_walking(target_minutes=5)
-        except Exception as e:                                          # NEW
+        except Exception as e:
             traceback.print_exc()
             self._set_status(f"❌ Walking could not start: {e}", ERROR)
             return
@@ -236,9 +240,9 @@ class FitPlayApp:
         self.root.withdraw()
         try:
             success, reps_done = exercise_func()
-        except Exception as e:                                          # NEW
-            # Previously an error here (e.g. camera or MediaPipe problem) only
-            # appeared in the terminal and the button seemed to do nothing.
+        except Exception as e:
+            # An error here (e.g. camera or MediaPipe problem) used to appear only in
+            # the terminal, so the button seemed to do nothing.
             traceback.print_exc()
             self._set_status(
                 f"❌ {activity_name.replace('_', ' ').title()} could not start: {e}", ERROR)
@@ -284,12 +288,56 @@ class FitPlayApp:
                 self._starting_game = False
                 return
 
-            self.root.after(500, self.root.destroy)
+            if self.is_game_running:                               # NEW
+                # Stay alive but out of the way; come back when the game closes.
+                self._hide_until_game_closes()
+            else:
+                self.root.after(500, self.root.destroy)            # old behaviour
         else:
             print("[ui.py] on_unlock_callback is None - nothing to launch.")
             self._starting_game = False
 
-    # ── Account (NEW) ──────────────────────────────────────────────────────
+    # ── Hide while the game runs, return when it closes (NEW) ─────────────
+    def _hide_until_game_closes(self):
+        self._waiting_for_game = True
+        self.root.withdraw()
+        self.root.after(GAME_START_GRACE_MS, self._check_game_closed)
+
+    def _check_game_closed(self):
+        if not self._waiting_for_game:
+            return      # we were already brought back (e.g. playtime ran out)
+        try:
+            try:
+                still_running = bool(self.is_game_running())
+            except Exception as e:
+                print(f"[ui.py] Game check failed: {e}")
+                still_running = False
+
+            if still_running:
+                self.root.after(GAME_CHECK_MS, self._check_game_closed)
+            else:
+                print("[ui.py] Game closed - bringing FitPlay back.")
+                self.show_again()
+        except tk.TclError:
+            pass        # window was closed
+
+    def show_again(self):
+        """Brings the window back: the game closed, or another launch asked for it
+        (Unity relaunches FitPlay when playtime runs out)."""
+        try:
+            self._starting_game = False
+            self._waiting_for_game = False
+            self.root.deiconify()
+            self.root.lift()
+            self.root.attributes("-topmost", True)
+            self.root.after(300, lambda: self.root.attributes("-topmost", False))
+            self.root.focus_force()
+            self._refresh_stats()
+            self._set_status("Back in FitPlay. Earn more minutes to play again.", TEXT_DIM)
+        except tk.TclError:
+            pass
+
+    # ── Account ────────────────────────────────────────────────────────────
     def do_logout(self):
         if self._starting_game:
             return
