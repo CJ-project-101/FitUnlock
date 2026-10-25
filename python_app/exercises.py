@@ -284,9 +284,11 @@ def run_push_ups():
     TARGET   = REWARDS["push_ups"]["reps"]
     cap      = cv2.VideoCapture(0)
     detector = PoseDetector()
-    guard    = LivenessGuard(detector, TARGET, mid_check=False,    # liveness
-                             intro="Stand up and face the camera",
-                             monitor_orientation=False)
+    guard = LivenessGuard(
+    detector,
+    TARGET,
+    mid_check=False
+)
     count    = 0
     stage    = None
 

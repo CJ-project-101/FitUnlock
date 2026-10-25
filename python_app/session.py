@@ -10,7 +10,7 @@ MAX_BANK_SECONDS = 60 * 60
 BASE_DIR     = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SESSION_PATH = os.path.join(BASE_DIR, "shared", "session.json")
 DB_PATH      = os.path.join(BASE_DIR, "shared", "fitplay.db")
-
+SOCIAL_PATH = os.path.join(BASE_DIR, "shared", "social_session.json")
 
 # ── SQLite history ─────────────────────────────────────────────────────────
 def init_db():
@@ -200,3 +200,126 @@ def lock_active_session():
     }
     _atomic_write_session(session)
     print("[session.py] Active session locked. Bank preserved.")
+
+
+
+
+def _atomic_write_json(path, data):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+        f.flush()
+        os.fsync(f.fileno())
+    for _ in range(10):
+        try:
+            os.replace(tmp, path)
+            return
+        except PermissionError:
+            time.sleep(0.05)
+    os.replace(tmp, path)
+
+
+def _read_json_file(path):
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data if isinstance(data, dict) else {}
+    except (FileNotFoundError, json.JSONDecodeError, OSError):
+        return {}
+
+
+# CHANGED (new): small helpers used by the functions below ----------------
+def _refund_bank(secs):
+    """Put seconds back into the FitPlay bank (capped at one hour)."""
+    if secs > 0:
+        session = read_session()
+        session["banked_seconds"] = min(session["banked_seconds"] + secs, MAX_BANK_SECONDS)
+        _atomic_write_session(session)
+
+
+def _lock_social():
+    _atomic_write_json(SOCIAL_PATH, {"status": "locked", "seconds_remaining": 0,
+                                     "started_at": "", "ends_at": 0, "user": ""})
+
+
+def social_status():
+    """'locked', 'unlocked' (granted, not yet claimed) or 'running'."""
+    return _read_json_file(SOCIAL_PATH).get("status", "locked")
+# -------------------------------------------------------------------------
+
+
+def start_social_session(seconds_to_spend, username=""):
+    """Moves time from the bank into a Reels session; the reels server claims it on its next /gate poll."""
+    seconds_to_spend = int(seconds_to_spend)
+    if seconds_to_spend <= 0:
+        return False
+
+    # CHANGED: never overwrite a session that still holds time
+    if social_status() in ("unlocked", "running"):
+        return False
+
+    session = read_session()
+    bank = session["banked_seconds"]
+    if seconds_to_spend > bank:
+        return False
+
+    session["banked_seconds"] = bank - seconds_to_spend
+    _atomic_write_session(session)
+
+    _atomic_write_json(SOCIAL_PATH, {
+        "status": "unlocked",
+        "seconds_remaining": seconds_to_spend,
+        "started_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "ends_at": 0,
+        "user": username,
+    })
+    return True
+
+
+def cancel_social_session():
+    """Undo a Reels session that was never claimed (e.g. the app failed to launch)."""
+    data = _read_json_file(SOCIAL_PATH)
+    if data.get("status") != "unlocked":
+        return 0
+    try:
+        secs = int(data.get("seconds_remaining", 0))
+    except (TypeError, ValueError):
+        secs = 0
+
+    if secs > 0:
+        session = read_session()
+        session["banked_seconds"] = min(session["banked_seconds"] + secs, MAX_BANK_SECONDS)
+        _atomic_write_session(session)
+
+    _atomic_write_json(SOCIAL_PATH, {"status": "locked", "seconds_remaining": 0,
+                                     "started_at": "", "ends_at": 0, "user": ""})
+    return secs
+
+
+# CHANGED (new): safety net for sessions nobody is using --------------------
+def reclaim_stale_social():
+    """Return time held by an abandoned Reels session.
+    The reels server normally does this itself (after 45 s); this covers the server being down too."""
+    data = _read_json_file(SOCIAL_PATH)
+    status, now = data.get("status"), time.time()
+
+    if status == "unlocked":                       # granted but never claimed
+        try:
+            started = datetime.strptime(data.get("started_at", ""), "%Y-%m-%d %H:%M:%S").timestamp()
+        except ValueError:
+            started = 0
+        if now - started > 900:                    # the server's claim window is 600 s
+            return cancel_social_session()
+
+    elif status == "running":                      # claimed, then the app and server died
+        try:
+            last = float(data.get("last_tick") or 0)
+            secs = int(float(data.get("seconds_remaining") or 0))
+        except (TypeError, ValueError):
+            last, secs = 0, 0
+        if now - last > 300:
+            _refund_bank(secs)
+            _lock_social()
+            return secs
+    return 0

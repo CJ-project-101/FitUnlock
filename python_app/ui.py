@@ -4,6 +4,9 @@ import sys
 import os
 import threading
 import traceback
+import socket
+import subprocess
+from pathlib import Path
 
 sys.path.append(os.path.dirname(__file__))
 
@@ -12,6 +15,11 @@ from session import add_minutes_to_bank, get_banked_seconds, start_play_session,
 from auth import update_leaderboard_stats
 from leaderboard_ui import LeaderboardWindow
 
+
+# CHANGED: added reclaim_stale_social and social_status
+from session import (add_minutes_to_bank, get_banked_seconds, start_play_session,
+                     start_social_session, cancel_social_session, reclaim_stale_social,
+                     social_status, init_db)
 
 # ── Color palette ──────────────────────────────────────────────────────────
 BG_DARK         = "#0d0d1a"
@@ -51,6 +59,7 @@ class FitPlayApp:
         self.is_game_running = is_game_running                     # NEW
         self._starting_game = False     # blocks double-clicks on Play
         self._waiting_for_game = False                             # NEW
+        self._reels_proc = None         # CHANGED: the Reelz client process we launched
 
         self.root.title("FitPlay")
         self.root.geometry("540x760")
@@ -58,6 +67,7 @@ class FitPlayApp:
         self.root.resizable(False, True)
 
         init_db()
+        reclaim_stale_social()          # CHANGED: return time from an abandoned Reels session
         self.build_ui()
         self._poll_bank()
 
@@ -141,6 +151,14 @@ class FitPlayApp:
             bg=ACCENT_TEAL, fg="white",
             font=("Segoe UI", 13, "bold"),
             command=self.do_play_game, cursor="hand2"
+        ).pack(side="left", padx=(0, 10))
+
+        # CHANGED: new Watch Reels button, in the same row
+        tk.Button(
+            button_row, text="🎬 Watch Reels",
+            bg=ACCENT_PINK, fg="white",
+            font=("Segoe UI", 13, "bold"),
+            command=self.do_watch_reels, cursor="hand2"
         ).pack(side="left", padx=(0, 10))
 
         tk.Button(
@@ -297,6 +315,81 @@ class FitPlayApp:
             print("[ui.py] on_unlock_callback is None - nothing to launch.")
             self._starting_game = False
 
+    # ── Watch Reels (CHANGED: whole section is new) ───────────────────────
+    def do_watch_reels(self):
+        if self._starting_game:
+            return
+
+        proc = self._reels_proc
+        if proc is not None and proc.poll() is None:
+            self._set_status("Reels is already open.", TEXT_DIM)
+            return
+
+        status = social_status()
+        if status == "running":
+            self._set_status("A Reels session is already running. Switch to the Reels window.", TEXT_DIM)
+            return
+        if status == "unlocked":
+            # time was already granted but the app is not open: just open it again
+            self._set_status("Reopening Reels with your granted time...", SUCCESS)
+            self._launch_reels_client()
+            return
+
+        banked = get_banked_seconds()
+        if banked <= 0:
+            self._set_status("No playtime available — complete an exercise first!", ERROR)
+            return
+        if not (REELS_DIR / "main.py").is_file():
+            self._set_status(f"Reels app not found at {REELS_DIR}", ERROR)
+            return
+        if not start_social_session(banked, self.email or ""):
+            self._set_status("Could not start the reels session.", ERROR)
+            return
+
+        self._refresh_stats()
+        self._set_status(f"Opening Reels with {fmt(banked)}...", SUCCESS)
+
+        flags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
+        delay = 0
+        try:
+            if REELS_SERVER_CMD and not _port_open():
+                subprocess.Popen(REELS_SERVER_CMD, cwd=str(REELS_SERVER_DIR), creationflags=flags)
+                delay = 2500                  # give the server a moment to start
+        except OSError as e:
+            cancel_social_session()
+            self._refresh_stats()
+            messagebox.showerror("Could not start the Reels server", str(e))
+            return
+
+        self.root.after(delay, self._launch_reels_client)
+
+    def _launch_reels_client(self):
+        python = REELS_PYTHON if REELS_PYTHON.is_file() else Path(sys.executable)
+        flags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
+        try:
+            log = open(REELS_DIR / "client.log", "w", encoding="utf-8")   # errors land here
+            self._reels_proc = subprocess.Popen(
+                [str(python), "main.py"], cwd=str(REELS_DIR),
+                stdout=log, stderr=subprocess.STDOUT, creationflags=flags)
+        except OSError as e:
+            cancel_social_session()           # nothing opened: give the time back
+            self._refresh_stats()
+            messagebox.showerror("Could not open Reels", str(e))
+            return
+        self.root.after(5000, self._check_reels_started)
+
+    def _check_reels_started(self):
+        """If the app died right away (e.g. PySide6 missing), refund the unclaimed time."""
+        try:
+            proc = self._reels_proc
+            if proc is not None and proc.poll() is not None:
+                if cancel_social_session() > 0:      # >0 only if it was never claimed
+                    self._refresh_stats()
+                    self._set_status("❌ Reels failed to start. Time returned. "
+                                     "See client.log in the reels\\client folder.", ERROR)
+        except tk.TclError:
+            pass
+
     # ── Hide while the game runs, return when it closes (NEW) ─────────────
     def _hide_until_game_closes(self):
         self._waiting_for_game = True
@@ -378,6 +471,23 @@ class FitPlayApp:
             self.root.after(BANK_POLL_MS, self._poll_bank)
         except tk.TclError:
             pass      # window was closed
+
+
+
+# ── EDIT THESE ──────────────────────────────────────────────────────────
+# CHANGED: set to your real folders
+REELS_DIR = Path(r"D:\Major project\reels\client")                           # folder with main.py and qml/
+REELS_PYTHON = Path(r"D:\Major project\reels\.venv\Scripts\python.exe")      # python that has PySide6
+REELS_SERVER_CMD = [str(REELS_PYTHON), "-m", "uvicorn", "main:app", "--port", "8000"]      # to auto-start your server, e.g. [str(REELS_PYTHON), "-m", "uvicorn", "main:app", "--port", "8000"]
+REELS_SERVER_DIR = REELS_DIR.parent / "server"
+
+
+def _port_open(port=8000):
+    try:
+        with socket.create_connection(("127.0.0.1", port), timeout=0.5):
+            return True
+    except OSError:
+        return False
 
 
 # ── Run standalone for testing ──────────────────────────────────────────────

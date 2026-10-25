@@ -4,13 +4,16 @@ from pathlib import Path
 import cv2
 import jwt
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form
-from fastapi.staticfiles import StaticFiles
+# CHANGED: removed the unused "from fastapi.staticfiles import StaticFiles" line
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from sqlalchemy import create_engine, String, ForeignKey, DateTime, Text, func, select
 from sqlalchemy.orm import (sessionmaker, DeclarativeBase, Mapped,
                             mapped_column, Session)
 from starlette.concurrency import run_in_threadpool
+
+from fastapi.responses import FileResponse
+from gate import router as gate_router, require_unlocked
 
 SECRET = os.getenv("JWT_SECRET", "change-me-in-production")
 DB_URL = os.getenv("DATABASE_URL", "sqlite:///reels.db")
@@ -78,8 +81,22 @@ class Follow(Base):
 Base.metadata.create_all(engine)
 
 app = FastAPI(title="Reels API")
-app.mount("/media", StaticFiles(directory=MEDIA), name="media")
+
 bearer = HTTPBearer()
+
+
+app.include_router(gate_router)
+
+@app.get("/media/{name}")
+def media(name: str):
+    """Thumbnails are public. Videos are served only while a session is unlocked."""
+    p = (MEDIA / name).resolve()
+    if p.parent != MEDIA.resolve() or not p.is_file():
+        raise HTTPException(404, "Not found")
+    if p.suffix.lower() != ".jpg":
+        require_unlocked()
+    return FileResponse(p)
+
 
 def get_db():
     with SessionLocal() as db:
@@ -142,7 +159,8 @@ def reel_dict(db: Session, r: Reel, me: User) -> dict:
             "likes": likes, "comments": comments, "liked": liked}
 
 
-@app.get("/reels")
+# CHANGED: the feed is refused while Reels is locked
+@app.get("/reels", dependencies=[Depends(require_unlocked)])
 def feed(offset: int = 0, limit: int = 20, db: Session = Depends(get_db),
          me: User = Depends(current_user)):
     rows = db.scalars(select(Reel).order_by(Reel.created_at.desc())
@@ -164,7 +182,8 @@ async def upload(caption: str = Form(""), file: UploadFile = File(...),
                 out.close(); (MEDIA / name).unlink(missing_ok=True)
                 raise HTTPException(413, "File too large (100 MB max)")
             out.write(chunk)
-        await run_in_threadpool(make_thumb, MEDIA / name, MEDIA / (Path(name).stem + ".jpg"))
+    # CHANGED: moved out of the "with" block, so the file is fully written and closed first
+    await run_in_threadpool(make_thumb, MEDIA / name, MEDIA / (Path(name).stem + ".jpg"))
     r = Reel(user_id=me.id, filename=name, caption=caption[:300])
     db.add(r); db.commit()
     return reel_dict(db, r, me)
@@ -236,7 +255,5 @@ def unfollow(username: str, db: Session = Depends(get_db), me: User = Depends(cu
     if f: db.delete(f); db.commit()
     return {"ok": True}
 
-# ---------- FitPlay gate hook (placeholder) ----------
-@app.get("/gate")
-def gate(me: User = Depends(current_user)):
-    return {"unlocked": True, "seconds": None}   # replace later with the real minute bank
+# CHANGED: the old placeholder /gate route was deleted from here.
+# The real /gate, /gate/tick and /gate/end now live in gate.py.

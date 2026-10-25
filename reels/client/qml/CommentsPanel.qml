@@ -1,0 +1,142 @@
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+
+Rectangle {
+    id: panel
+    property bool opened: false
+    property int reelId: -1
+    property bool loading: false
+    property string error: ""
+    signal closed()
+
+    width: Math.min(400, parent.width)
+    height: parent.height
+    y: 0
+    x: opened ? parent.width - width : parent.width
+    visible: x < parent.width - 0.5
+    color: Theme.panel
+    Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+
+    Rectangle { width: 1; height: parent.height; color: Theme.border }
+    WheelHandler { }          // swallow wheel events so the feed does not change reels
+
+    ListModel { id: cm }
+
+    function openFor(id) {
+        reelId = id
+        cm.clear()
+        error = ""
+        loading = true
+        opened = true
+        backend.loadComments(id)
+        input.forceActiveFocus()
+    }
+    function close() { opened = false; closed() }
+    function post() {
+        var t = input.text.trim()
+        if (t.length === 0) return
+        backend.addComment(reelId, t)
+        input.clear()
+    }
+
+    Connections {
+        target: backend
+        function onCommentsLoaded(id, list) {
+            if (id !== panel.reelId) return
+            panel.loading = false
+            panel.error = ""
+            cm.clear()
+            for (var i = 0; i < list.length; i++) cm.append({ author: list[i].author, text: list[i].text })
+        }
+        function onCommentsFailed(id, msg) {
+            if (id !== panel.reelId) return
+            panel.loading = false
+            panel.error = msg
+        }
+    }
+
+    ColumnLayout {
+        anchors.fill: parent
+        anchors.margins: 16
+        spacing: 12
+
+        RowLayout {
+            Layout.fillWidth: true
+            Text { text: "Comments"; color: Theme.text; font.pixelSize: 18; font.bold: true; Layout.fillWidth: true }
+            Item {
+                width: 32; height: 32
+                Icon { anchors.centerIn: parent; size: 20; path: Icons.close }
+                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: panel.close() }
+            }
+        }
+        Rectangle { Layout.fillWidth: true; height: 1; color: Theme.border }
+
+        Item {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+
+            ListView {
+                id: cl
+                anchors.fill: parent
+                clip: true
+                spacing: 16
+                model: cm
+                boundsBehavior: Flickable.StopAtBounds
+                delegate: Row {
+                    id: r
+                    required property string author
+                    required property string text
+                    spacing: 12
+                    width: cl.width
+                    Avatar { name: r.author; size: 34 }
+                    Column {
+                        width: r.width - 46
+                        spacing: 2
+                        Text { text: r.author; color: Theme.text; font.bold: true; font.pixelSize: 14 }
+                        Text { width: parent.width; text: r.text; color: Theme.text; font.pixelSize: 14; wrapMode: Text.Wrap }
+                    }
+                }
+            }
+            Text {
+                anchors.centerIn: parent
+                visible: panel.loading
+                text: "Loading comments…"
+                color: Theme.muted
+            }
+            Text {
+                anchors.centerIn: parent
+                width: parent.width - 32
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.Wrap
+                visible: !panel.loading && panel.error !== ""
+                text: "Couldn't load comments.\n" + panel.error
+                color: Theme.muted
+            }
+            Text {
+                anchors.centerIn: parent
+                visible: !panel.loading && panel.error === "" && cm.count === 0
+                text: "No comments yet.\nBe the first to comment."
+                horizontalAlignment: Text.AlignHCenter
+                color: Theme.muted
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 8
+            AppTextField {
+                id: input
+                Layout.fillWidth: true
+                placeholderText: "Add a comment…"
+                maximumLength: 500
+                onAccepted: panel.post()
+            }
+            PillButton {
+                text: "Post"
+                enabled: input.text.trim().length > 0
+                onClicked: panel.post()
+            }
+        }
+    }
+}

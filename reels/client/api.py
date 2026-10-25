@@ -33,7 +33,8 @@ class Api:
         d = self._call("POST", f"/{mode}", json={"username": username, "password": password})
         self.token, self.username = d["token"], d["username"]
 
-    def feed(self):                 return self._call("GET", "/reels")
+    def feed(self, offset=0, limit=20):
+        return self._call("GET", "/reels", params={"offset": offset, "limit": limit})
     def like(self, rid, on):        return self._call("POST" if on else "DELETE", f"/reels/{rid}/like")
     def comments(self, rid):        return self._call("GET", f"/reels/{rid}/comments")
     def add_comment(self, rid, t):  return self._call("POST", f"/reels/{rid}/comments", json={"text": t})
@@ -45,3 +46,9 @@ class Api:
         with open(path, "rb") as f:
             return self._call("POST", "/reels", timeout=120,
                               data={"caption": caption}, files={"file": f})
+
+    def tick(self, watching):
+        return self._call("POST", "/gate/tick", json={"watching": bool(watching)}, timeout=3)
+
+    def gate_end(self):
+        return self._call("POST", "/gate/end", timeout=3)
