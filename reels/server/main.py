@@ -240,6 +240,13 @@ def profile(username: str, db: Session = Depends(get_db), me: User = Depends(cur
             "reels": [{"id": r.id, "caption": r.caption, "thumb_url": thumb_url(r.filename)}
                       for r in reels]}
 
+@app.get("/users/{username}/reels", dependencies=[Depends(require_unlocked)])
+def user_reels(username: str, db: Session = Depends(get_db), me: User = Depends(current_user)):
+    u = find_user(db, username)
+    rows = db.scalars(select(Reel).where(Reel.user_id == u.id)
+                      .order_by(Reel.created_at.desc()).limit(100)).all()
+    return [reel_dict(db, r, me) for r in rows]
+
 @app.post("/follow/{username}")
 def follow(username: str, db: Session = Depends(get_db), me: User = Depends(current_user)):
     u = find_user(db, username)

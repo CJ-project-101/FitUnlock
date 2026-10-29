@@ -36,6 +36,7 @@ Rectangle {
             model: [
                 { key: "reels",    label: "Reels",         icon: Icons.reels,  ok: true },
                 { key: "search",   label: "Search",        icon: Icons.search, ok: true },
+                { key: "explore",  label: "Explore",       icon: Icons.explore, ok: true },
                 { key: "activity", label: "Notifications", icon: Icons.heart,  ok: false },
                 { key: "messages", label: "Messages",      icon: Icons.send,   ok: false },
                 { key: "upload",   label: "Create",        icon: Icons.plus,   ok: true },

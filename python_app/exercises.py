@@ -2,7 +2,7 @@ import cv2
 import time
 import sys
 import os
-
+import numpy as np
 sys.path.append(os.path.dirname(__file__))
 from pose_detector import PoseDetector, Joint
 from liveness import LivenessGuard, verify_joints                  # NEW
@@ -12,12 +12,17 @@ from liveness import LivenessGuard, verify_joints                  # NEW
 REWARDS = {
     "squats":        {"reps": 10, "minutes": 15},
     "jumping_jacks": {"reps": 15, "minutes": 20},
-    "push_ups":      {"reps": 1,  "minutes": 1},
+    "push_ups":      {"reps": 10,  "minutes": 1},
     "arm_raises":    {"reps": 12, "minutes": 10},
 }
 
 # ── Why the last exercise was rejected (read by ui.py)  (NEW) ────────────────
 LAST_FAILURE_REASON = ""
+
+
+def side_joints(side, *parts):
+    """side_joints("RIGHT", "HIP", "KNEE", "ANKLE") -> (Joint.RIGHT_HIP, ...)"""
+    return tuple(getattr(Joint, f"{side}_{p}") for p in parts)
 
 
 def get_last_failure():
@@ -70,6 +75,8 @@ def draw_hud(frame, exercise_name, count, target, stage, angle_text="", instruct
 
 
 
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 #  1. SQUATS
 #  Calibrated to Calvin's readings:
@@ -108,8 +115,8 @@ def run_squats():
 
         if detector.is_person_detected() and not guard.challenge_active:   # CHANGED
             knee_angle = detector.get_angle(
-                Joint.LEFT_HIP, Joint.LEFT_KNEE, Joint.LEFT_ANKLE
-            )
+                *side_joints(guard.working_side, "HIP", "KNEE", "ANKLE")
+)
 
             if knee_angle is not None:
                 angle_txt = f"Knee angle: {knee_angle:.1f} deg"
@@ -134,7 +141,7 @@ def run_squats():
                         1.3, (0, 0, 255), 3)
             cv2.imshow("FitPlay — Squats", frame)
             cv2.waitKey(2000)
-            break
+            
 
         # ── Completion flash ───────────────────────────────────────────────
         if count >= TARGET and guard.passed:                       # CHANGED
@@ -287,13 +294,13 @@ def run_push_ups():
     guard = LivenessGuard(
     detector,
     TARGET,
-    mid_check=False
+    mid_check=True
 )
     count    = 0
     stage    = None
 
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH,  640)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH,  1920)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1200)
 
     print(f"\n[PUSH-UPS] Target: {TARGET} reps.  Lie sideways to camera.")
     print("Press Q to quit early.\n")
@@ -313,8 +320,8 @@ def run_push_ups():
 
         if detector.is_person_detected() and not guard.challenge_active:   # CHANGED
             elbow_angle = detector.get_angle(
-                Joint.LEFT_SHOULDER, Joint.LEFT_ELBOW, Joint.LEFT_WRIST
-            )
+                *side_joints(guard.working_side, "SHOULDER", "ELBOW", "WRIST")
+)
 
             if elbow_angle is not None:
                 angle_txt = f"Elbow angle: {elbow_angle:.1f} deg"

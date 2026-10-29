@@ -94,6 +94,7 @@ Item {
 
         delegate: Item {
             id: tile
+            required property int index
             required property var modelData
             width: grid.cellWidth
             height: grid.cellHeight
@@ -102,6 +103,8 @@ Item {
                 anchors.margins: 2
                 color: Theme.card
                 clip: true
+                scale: tileArea.containsMouse ? 1.025 : 1.0
+                Behavior on scale { NumberAnimation { duration: 120 } }
                 Image {
                     anchors.fill: parent
                     source: tile.modelData.thumbUrl
@@ -118,6 +121,13 @@ Item {
                     wrapMode: Text.Wrap
                     horizontalAlignment: Text.AlignHCenter
                     elide: Text.ElideRight
+                }
+                MouseArea {
+                    id: tileArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: backend.openUserReels(pv.info.username, tile.index)
                 }
             }
         }

@@ -17,4 +17,5 @@ QtObject {
     readonly property string volumeOff: "M3 9 H7 L12 5 V19 L7 15 H3 Z M16 9 L22 15 M22 9 L16 15"
     readonly property string lock: "M5 11 H19 V21 H5 Z M8 11 V7 A4 4 0 0 1 16 7 V11"
     readonly property string spinner: "M12 3 A9 9 0 1 1 3 12"
+    readonly property string explore: "M3 3 H10 V10 H3 Z M14 3 H21 V10 H14 Z M3 14 H10 V21 H3 Z M14 14 H21 V21 H14 Z"
 }

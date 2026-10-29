@@ -7,6 +7,9 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] float jumpSpeed = 10f;
     [SerializeField] float climbSpeed = 4f;
     [SerializeField] Vector2 deathKick=new Vector2 (10f,10f);
+
+    float lastWallJumpTime = -10f;
+    [SerializeField] float wallJumpCooldown = 0.3f; 
     Vector2 moveInput;
     Rigidbody2D myRigidbody;
     Animator myAnimator;
@@ -49,18 +52,34 @@ public class PlayerMovement : MonoBehaviour
     }
     
     void OnJump(InputValue value)
+{
+    // Keep your existing variables
+float lastWallJumpTime = -10f;
+ float wallJumpCooldown = 0.3f;
+
+// ADD THESE TWO LINES HERE:
+ float wallJumpLockDuration = 0.2f; // How long the player loses control
+float wallJumpLockTimer = 0f; // Tracks the remaining lock time
+
+    if(!isAlive){return;}
+    bool touchingWall = myBodyCollider.IsTouchingLayers(LayerMask.GetMask("Wall"));
+    bool grounded = myFeetCollider.IsTouchingLayers(LayerMask.GetMask("Ground"));
+
+    if (value.isPressed)
     {
-        if(!isAlive){return;}
-        if (!myFeetCollider.IsTouchingLayers(LayerMask.GetMask("Ground")))
+        if (grounded)
         {
-            return;
+            myRigidbody.linearVelocity = new Vector2(myRigidbody.linearVelocity.x, jumpSpeed);
         }
-        
-        if(value.isPressed )
+        else if (touchingWall && Time.time > lastWallJumpTime + wallJumpCooldown)
         {
-            myRigidbody.linearVelocity += new Vector2(0f, jumpSpeed);
+            float wallDirection = -Mathf.Sign(transform.localScale.x);
+            myRigidbody.linearVelocity = new Vector2(wallDirection * runSpeed, jumpSpeed);
+            wallJumpLockTimer = wallJumpLockDuration;
+            lastWallJumpTime = Time.time;
         }
     }
+}
 
     void Run()
     {

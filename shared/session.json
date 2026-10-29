@@ -1,5 +1,5 @@
 {
-  "banked_seconds": 46,
+  "banked_seconds": 60,
   "max_bank_seconds": 3600,
   "active_session": {
     "status": "locked",

@@ -4,6 +4,9 @@ BASE = "http://127.0.0.1:8000"
 
 class Api:
 
+    def user_reels(self, name):
+        return self._call("GET", f"/users/{name}/reels")
+
     def get_bytes(self, path):
         try:
             r = self.s.get(BASE + path, timeout=10)

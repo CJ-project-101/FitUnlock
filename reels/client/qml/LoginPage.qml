@@ -6,6 +6,8 @@ Item {
     property bool signup: false
     function submit() { backend.authenticate(user.text, pass.text, signup ? "signup" : "login") }
 
+    Backdrop { anchors.fill: parent }
+
     Rectangle {
         anchors.centerIn: parent
         width: Math.min(360, parent.width - 48)

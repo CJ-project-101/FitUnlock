@@ -16,3 +16,6 @@ SearchPage SearchPage.qml
 LoginPage LoginPage.qml
 Shell Shell.qml
 Toast Toast.qml
+Backdrop Backdrop.qml
+Stickman Stickman.qml
+ExplorePage ExplorePage.qml

@@ -1,143 +1,119 @@
 import os
 import sys
-import queue
-import threading
-import tkinter as tk
+
+from PySide6.QtCore import Qt, Signal, QTimer
+from PySide6.QtGui import QColor
+from PySide6.QtWidgets import (QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton,
+                               QVBoxLayout, QWidget)
 
 sys.path.append(os.path.dirname(__file__))
 from auth import create_user, verify_login_rest, init_firebase
-
-# ─────────────────────────────────────────────────────────────
-# THEME  (edit these to restyle the whole screen)
-# ─────────────────────────────────────────────────────────────
-BG = "#0b0b16"            # window background
-CARD = "#15152a"          # card background
-FIELD = "#1d1d38"         # input background
-BORDER = "#2a2a4a"        # idle border
-TEAL = "#0fd8a8"          # accent
-TEAL_HOVER = "#2cf0c0"
-TEAL_PRESS = "#0bb68d"
-TEAL_DISABLED = "#2a5f55"
-ON_TEAL = "#04231c"       # text on accent
-TEXT = "#f2f2f7"
-DIM = "#8a8a9e"
-ERROR = "#ff5e7a"
-WARN = "#ffb84d"
-
-FONT = "Segoe UI"
-F_TITLE = (FONT, 26, "bold")
-F_SUB = (FONT, 10)
-F_TAB = (FONT, 10, "bold")
-F_LABEL = (FONT, 9, "bold")
-F_ENTRY = (FONT, 11)
-F_BTN = (FONT, 12, "bold")
-F_SMALL = (FONT, 9)
+from qtutil import run_async
+from fx import (BackdropPage, GlowCard, GlowButton, GradientText, FlameLogo, ThemeDots,
+                make_divider, set_theme, T, FONT)
 
 FORM_W = 370
-WIN_W, WIN_H = 480, 640
 
 
-# ─────────────────────────────────────────────────────────────
-# SMALL WIDGET HELPERS
-# ─────────────────────────────────────────────────────────────
-
-def round_rect(canvas, x1, y1, x2, y2, r, **kw):
-    """Draws a rounded rectangle on a canvas."""
-    pts = [x1 + r, y1, x2 - r, y1, x2, y1, x2, y1 + r,
-           x2, y2 - r, x2, y2, x2 - r, y2, x1 + r, y2,
-           x1, y2, x1, y2 - r, x1, y1 + r, x1, y1]
-    return canvas.create_polygon(pts, smooth=True, **kw)
-
-
-class RoundedButton(tk.Canvas):
-    """Accent button with rounded corners, hover and press states."""
-
-    def __init__(self, parent, text, command, width, height=46, radius=14):
-        super().__init__(parent, width=width, height=height, bg=CARD,
-                         highlightthickness=0, bd=0, cursor="hand2")
-        self.command = command
-        self._enabled = True
-        self._shape = round_rect(self, 1, 1, width - 1, height - 1, radius,
-                                 fill=TEAL, outline=TEAL)
-        self._label = self.create_text(width // 2, height // 2, text=text,
-                                       fill=ON_TEAL, font=F_BTN)
-        self.bind("<Enter>", lambda e: self._paint(TEAL_HOVER))
-        self.bind("<Leave>", lambda e: self._paint(TEAL))
-        self.bind("<ButtonPress-1>", lambda e: self._paint(TEAL_PRESS))
-        self.bind("<ButtonRelease-1>", self._on_release)
-
-    def _paint(self, color):
-        if self._enabled:
-            self.itemconfig(self._shape, fill=color, outline=color)
-
-    def _on_release(self, event):
-        if not self._enabled:
-            return
-        self._paint(TEAL_HOVER)
-        if 0 <= event.x <= self.winfo_width() and 0 <= event.y <= self.winfo_height():
-            self.command()
-
-    def set_text(self, text):
-        self.itemconfig(self._label, text=text)
-
-    def set_enabled(self, enabled):
-        self._enabled = enabled
-        color = TEAL if enabled else TEAL_DISABLED
-        self.itemconfig(self._shape, fill=color, outline=color)
-        self.config(cursor="hand2" if enabled else "arrow")
+def _style():
+    """Built when the screen is created, so it always uses the active theme."""
+    r, g, b, _ = QColor(T.accent).getRgb()
+    ink = T.btn_primary["text"]
+    return f"""
+QLabel#fieldLabel {{ color: {T.dim}; font-family: "{FONT}"; font-size: 9pt; font-weight: bold; background: transparent; }}
+QLabel#strengthLabel {{ color: {T.dim}; font-size: 9pt; background: transparent; }}
+QFrame#tabs {{ background: rgba(255,255,255,14); border-radius: 10px; }}
+QPushButton#tab {{ background: transparent; color: {T.dim}; border: none; border-radius: 8px;
+                   padding: 8px; font-family: "{FONT}"; font-size: 10pt; font-weight: bold; }}
+QPushButton#tab:checked {{ color: {ink};
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {T.accent_hi}, stop:1 {T.accent}); }}
+QFrame#fieldBox {{ background: rgba(4,6,12,200); border: 1px solid rgba({r},{g},{b},90); border-radius: 10px; }}
+QFrame#fieldBox[state="focus"] {{ background: rgba(14,20,34,225); border: 1px solid {T.accent_hi}; }}
+QFrame#fieldBox[state="error"] {{ border: 1px solid {T.error}; }}
+QLineEdit#fieldEntry {{ background: transparent; border: none; color: {T.text};
+                        font-family: "{FONT}"; font-size: 11pt; padding: 9px 0px;
+                        selection-background-color: {T.accent}; selection-color: {ink}; }}
+QPushButton#showToggle {{ background: transparent; border: none; color: {T.dim};
+                          font-family: "{FONT}"; font-size: 9pt; padding: 0px 10px; }}
+QPushButton#showToggle:hover {{ color: {T.accent_hi}; }}
+"""
 
 
-class Field(tk.Frame):
-    """Labelled input with a border that lights up on focus.
-    Password fields get a Show/Hide toggle."""
+class FocusLineEdit(QLineEdit):
+    focusChanged = Signal(bool)
 
-    def __init__(self, parent, label, secret=False):
-        super().__init__(parent, bg=CARD)
-        self.secret = secret
+    def focusInEvent(self, event):
+        super().focusInEvent(event)
+        self.focusChanged.emit(True)
 
-        tk.Label(self, text=label.upper(), font=F_LABEL, bg=CARD, fg=DIM,
-                 anchor="w").pack(fill="x")
+    def focusOutEvent(self, event):
+        super().focusOutEvent(event)
+        self.focusChanged.emit(False)
 
-        self.border = tk.Frame(self, bg=BORDER, padx=1, pady=1)
-        self.border.pack(fill="x", pady=(5, 0))
-        inner = tk.Frame(self.border, bg=FIELD)
-        inner.pack(fill="x")
 
-        self.entry = tk.Entry(inner, font=F_ENTRY, bg=FIELD, fg=TEXT,
-                              insertbackground=TEXT, relief="flat", bd=0,
-                              highlightthickness=0, show="•" if secret else "")
-        self.entry.pack(side="left", fill="x", expand=True, padx=(12, 4), ipady=9)
+class Field(QWidget):
+    """Labelled input whose border lights up on focus. Password fields get Show/Hide."""
 
+    def __init__(self, label, secret=False):
+        super().__init__()
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.setSpacing(5)
+
+        cap = QLabel(label.upper())
+        cap.setObjectName("fieldLabel")
+        lay.addWidget(cap)
+
+        self.box = QFrame()
+        self.box.setObjectName("fieldBox")
+        self.box.setProperty("state", "idle")
+        self.box.setMinimumHeight(42)
+        row = QHBoxLayout(self.box)
+        row.setContentsMargins(12, 0, 4, 0)
+        row.setSpacing(0)
+
+        self.entry = FocusLineEdit()
+        self.entry.setObjectName("fieldEntry")
         if secret:
-            self.toggle = tk.Label(inner, text="Show", font=F_SMALL, bg=FIELD,
-                                   fg=DIM, cursor="hand2", padx=10)
-            self.toggle.pack(side="right")
-            self.toggle.bind("<Button-1>", self._toggle_visibility)
+            self.entry.setEchoMode(QLineEdit.EchoMode.Password)
+        row.addWidget(self.entry, 1)
 
-        inner.bind("<Button-1>", lambda e: self.entry.focus_set())
-        self.entry.bind("<FocusIn>", lambda e: self.border.config(bg=TEAL))
-        self.entry.bind("<FocusOut>", lambda e: self.border.config(bg=BORDER))
+        self.toggle = None
+        if secret:
+            self.toggle = QPushButton("Show")
+            self.toggle.setObjectName("showToggle")
+            self.toggle.setCursor(Qt.CursorShape.PointingHandCursor)
+            self.toggle.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+            self.toggle.clicked.connect(self._toggle_visibility)
+            row.addWidget(self.toggle)
 
-    def _toggle_visibility(self, _event=None):
-        hidden = self.entry.cget("show") == "•"
-        self.entry.config(show="" if hidden else "•")
-        self.toggle.config(text="Hide" if hidden else "Show")
+        lay.addWidget(self.box)
+        self.entry.focusChanged.connect(lambda has: self._set_state("focus" if has else "idle"))
+
+    def _set_state(self, state):
+        self.box.setProperty("state", state)
+        self.box.style().unpolish(self.box)
+        self.box.style().polish(self.box)
+
+    def _toggle_visibility(self):
+        hidden = self.entry.echoMode() == QLineEdit.EchoMode.Password
+        self.entry.setEchoMode(QLineEdit.EchoMode.Normal if hidden else QLineEdit.EchoMode.Password)
+        self.toggle.setText("Hide" if hidden else "Show")
 
     def get(self):
-        return self.entry.get()
+        return self.entry.text()
 
     def set(self, text):
-        self.entry.delete(0, "end")
-        self.entry.insert(0, text)
+        self.entry.setText(text)
 
     def focus(self):
-        self.entry.focus_set()
+        self.entry.setFocus()
 
     def bind_return(self, callback):
-        self.entry.bind("<Return>", lambda e: callback())
+        self.entry.returnPressed.connect(callback)
 
     def mark_error(self):
-        self.border.config(bg=ERROR)
+        self._set_state("error")
 
 
 def _strength(pw):
@@ -155,193 +131,219 @@ def _strength(pw):
     return score
 
 
-# ─────────────────────────────────────────────────────────────
-# LOGIN SCREEN
-# ─────────────────────────────────────────────────────────────
-
-class LoginScreen:
-    def __init__(self, root, on_login_success):
-        self.root = root
+class LoginScreen(BackdropPage):
+    def __init__(self, shell, on_login_success, on_restyle=None):
+        super().__init__()
+        self.shell = shell
         self.on_login_success = on_login_success
+        self.on_restyle = on_restyle       # called after a theme change to rebuild this screen
         self.mode = "login"
         self._busy = False
-        self._alive = True
-        self._queue = queue.Queue()      # worker threads -> Tk main thread
 
-        root.title("FitPlay — Sign in")
-        root.configure(bg=BG)
-        root.resizable(False, False)
-        self._center(WIN_W, min(WIN_H, root.winfo_screenheight() - 80))
+        shell.setWindowTitle("FitPlay — Sign in")
+        self.setStyleSheet(_style())
 
-        init_firebase()
+        init_firebase()          # raises a clear error if auth.py is not configured
         self._build_shell()
         self._render_form()
-        self._poll()
-
-    # ---------- window ----------
-    def _center(self, w, h):
-        x = (self.root.winfo_screenwidth() - w) // 2
-        y = max((self.root.winfo_screenheight() - h) // 2 - 20, 0)
-        self.root.geometry(f"{w}x{h}+{x}+{y}")
 
     # ---------- static layout ----------
     def _build_shell(self):
-        for w in self.root.winfo_children():
-            w.destroy()
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.addStretch(1)
 
-        border = tk.Frame(self.root, bg=BORDER, padx=1, pady=1)
-        border.place(relx=0.5, rely=0.5, anchor="center")
-        card = tk.Frame(border, bg=CARD, padx=36, pady=24)
-        card.pack()
-        tk.Frame(card, width=FORM_W, height=0, bg=CARD).pack()   # fixes card width
+        card = GlowCard(accent=T.accent, radius=20)
+        card.setFixedWidth(FORM_W + 72 + 2 * card.RING)
+        lay = QVBoxLayout(card)
+        lay.setContentsMargins(36 + card.RING, 14 + card.RING, 36 + card.RING, 14 + card.RING)
+        lay.setSpacing(0)
 
-        # logo: rounded square with a dumbbell
-        logo = tk.Canvas(card, width=60, height=60, bg=CARD, highlightthickness=0)
-        round_rect(logo, 2, 2, 58, 58, 16, fill=TEAL, outline=TEAL)
-        round_rect(logo, 8, 25, 13, 35, 2, fill=ON_TEAL, outline=ON_TEAL)
-        round_rect(logo, 13, 19, 20, 41, 3, fill=ON_TEAL, outline=ON_TEAL)
-        logo.create_rectangle(20, 28, 40, 32, fill=ON_TEAL, outline=ON_TEAL)
-        round_rect(logo, 40, 19, 47, 41, 3, fill=ON_TEAL, outline=ON_TEAL)
-        round_rect(logo, 47, 25, 52, 35, 2, fill=ON_TEAL, outline=ON_TEAL)
-        logo.pack()
+        # logo + title
+        head = QHBoxLayout()
+        head.setSpacing(4)
+        head.addStretch(1)
+        head.addWidget(FlameLogo(64, 76))
+        title_col = QVBoxLayout()
+        title_col.setSpacing(0)
+        title_col.addStretch(1)
+        title_col.addWidget(GradientText("FITPLAY", 38, align="left"))
+        tag = QLabel("Move to unlock. Play to earn.")
+        tag.setStyleSheet(f"color: {T.accent_hi}; font-size: 10pt; font-weight: bold; padding-left: 8px;")
+        title_col.addWidget(tag)
+        title_col.addStretch(1)
+        head.addLayout(title_col)
+        head.addStretch(1)
+        lay.addLayout(head)
+        lay.addWidget(make_divider())
+        lay.addSpacing(14)
 
-        title = tk.Frame(card, bg=CARD)
-        title.pack(pady=(12, 0))
-        tk.Label(title, text="FIT", font=F_TITLE, bg=CARD, fg=TEXT).pack(side="left")
-        tk.Label(title, text="PLAY", font=F_TITLE, bg=CARD, fg=TEAL).pack(side="left")
-        tk.Label(card, text="Move to unlock. Play to earn.", font=F_SUB,
-                 bg=CARD, fg=DIM).pack(pady=(2, 18))
+        self._build_tabs(lay)
+        lay.addSpacing(16)
 
-        self._build_tabs(card)
+        self.form = QWidget()
+        self.form_layout = QVBoxLayout(self.form)
+        self.form_layout.setContentsMargins(0, 0, 0, 0)
+        self.form_layout.setSpacing(0)
+        lay.addWidget(self.form)
+        lay.addSpacing(16)
 
-        self.form = tk.Frame(card, bg=CARD)
-        self.form.pack(fill="x", pady=(18, 0))
+        self.button = GlowButton("Log In", palette="primary", pulse=True, height=50, font_px=17)
+        self.button.clicked.connect(self._submit)
+        lay.addWidget(self.button)
+        lay.addSpacing(4)
 
-        self.button = RoundedButton(card, "Log In", self._submit, FORM_W)
-        self.button.pack(pady=(20, 0))
+        self.status = QLabel("")
+        self.status.setWordWrap(True)
+        self.status.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.status.setMinimumHeight(30)
+        lay.addWidget(self.status)
 
-        self.status = tk.Label(card, text="", font=F_SMALL, bg=CARD, fg=ERROR,
-                               wraplength=FORM_W, height=2, justify="center")
-        self.status.pack(pady=(8, 0))
+        # theme picker
+        lay.addSpacing(4)
+        vibe = QLabel("CHOOSE YOUR VIBE")
+        vibe.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        vibe.setStyleSheet(f"color: {T.dim}; font-size: 8pt; font-weight: bold;")
+        lay.addWidget(vibe)
+        dots = ThemeDots()
+        dots.selected.connect(self._on_theme_selected)
+        lay.addWidget(dots, 0, Qt.AlignmentFlag.AlignHCenter)
 
-    def _build_tabs(self, parent):
-        wrap = tk.Frame(parent, bg=FIELD, padx=4, pady=4)
-        wrap.pack(fill="x")
-        self._tabs = {}
+        outer.addWidget(card, 0, Qt.AlignmentFlag.AlignHCenter)
+        outer.addStretch(1)
+
+    def _on_theme_selected(self, key):
+        set_theme(key)
+        if self.on_restyle:
+            QTimer.singleShot(0, self.on_restyle)
+
+    def _build_tabs(self, parent_layout):
+        wrap = QFrame()
+        wrap.setObjectName("tabs")
+        row = QHBoxLayout(wrap)
+        row.setContentsMargins(4, 4, 4, 4)
+        row.setSpacing(0)
+        self._tab_buttons = {}
         for key, text in (("login", "Log In"), ("signup", "Sign Up")):
-            lbl = tk.Label(wrap, text=text, font=F_TAB, cursor="hand2", pady=8, width=14)
-            lbl.pack(side="left", fill="x", expand=True)
-            lbl.bind("<Button-1>", lambda e, k=key: self._switch(k))
-            self._tabs[key] = lbl
+            b = QPushButton(text)
+            b.setObjectName("tab")
+            b.setCheckable(True)
+            b.setCursor(Qt.CursorShape.PointingHandCursor)
+            b.clicked.connect(lambda _checked=False, k=key: self._switch(k))
+            row.addWidget(b, 1)
+            self._tab_buttons[key] = b
+        parent_layout.addWidget(wrap)
 
     def _style_tabs(self):
-        for key, lbl in self._tabs.items():
-            if key == self.mode:
-                lbl.config(bg=TEAL, fg=ON_TEAL)
-            else:
-                lbl.config(bg=FIELD, fg=DIM)
+        for key, b in self._tab_buttons.items():
+            b.setChecked(key == self.mode)
 
     # ---------- dynamic form ----------
+    def _clear_form(self):
+        while self.form_layout.count():
+            item = self.form_layout.takeAt(0)
+            w = item.widget()
+            if w is not None:
+                w.deleteLater()
+
     def _render_form(self):
-        for w in self.form.winfo_children():
-            w.destroy()
+        self._clear_form()
         self._set_status("")
         self._style_tabs()
 
         if self.mode == "login":
-            self.f_email = Field(self.form, "Email")
-            self.f_email.pack(fill="x", pady=(0, 12))
-            self.f_pass = Field(self.form, "Password", secret=True)
-            self.f_pass.pack(fill="x")
+            self.f_email = Field("Email")
+            self.f_pass = Field("Password", secret=True)
+            self.form_layout.addWidget(self.f_email)
+            self.form_layout.addSpacing(12)
+            self.form_layout.addWidget(self.f_pass)
 
             self.f_email.bind_return(self.f_pass.focus)
             self.f_pass.bind_return(self._submit)
-            self.button.set_text("Log In")
+            self.button.setText("Log In")
             self.f_email.focus()
         else:
-            self.f_name = Field(self.form, "Display name")
-            self.f_name.pack(fill="x", pady=(0, 12))
-            self.f_email = Field(self.form, "Email")
-            self.f_email.pack(fill="x", pady=(0, 12))
-            self.f_pass = Field(self.form, "Password (min 6 characters)", secret=True)
-            self.f_pass.pack(fill="x")
-            self._build_strength(self.form)
+            self.f_name = Field("Display name")
+            self.f_email = Field("Email")
+            self.f_pass = Field("Password (min 6 characters)", secret=True)
+            self.form_layout.addWidget(self.f_name)
+            self.form_layout.addSpacing(12)
+            self.form_layout.addWidget(self.f_email)
+            self.form_layout.addSpacing(12)
+            self.form_layout.addWidget(self.f_pass)
+            self._build_strength()
 
             self.f_name.bind_return(self.f_email.focus)
             self.f_email.bind_return(self.f_pass.focus)
             self.f_pass.bind_return(self._submit)
-            self.f_pass.entry.bind("<KeyRelease>", self._update_strength)
-            self.button.set_text("Create Account")
+            self.f_pass.entry.textChanged.connect(self._update_strength)
+            self.button.setText("Create Account")
             self.f_name.focus()
 
-    def _build_strength(self, parent):
-        row = tk.Frame(parent, bg=CARD)
-        row.pack(fill="x", pady=(10, 0))
+    def _build_strength(self):
+        self.form_layout.addSpacing(10)
+        host = QWidget()
+        row = QHBoxLayout(host)
+        row.setContentsMargins(0, 0, 0, 0)
+        row.setSpacing(6)
         self._segments = []
         for _ in range(3):
-            seg = tk.Frame(row, bg=FIELD, height=4)
-            seg.pack(side="left", fill="x", expand=True, padx=(0, 6))
+            seg = QFrame()
+            seg.setFixedHeight(4)
+            seg.setStyleSheet("background: rgba(255,255,255,25); border-radius: 2px;")
+            row.addWidget(seg, 1)
             self._segments.append(seg)
-        self._strength_lbl = tk.Label(row, text="", font=F_SMALL, bg=CARD,
-                                      fg=DIM, width=9, anchor="e")
-        self._strength_lbl.pack(side="right")
+        self._strength_lbl = QLabel("")
+        self._strength_lbl.setObjectName("strengthLabel")
+        self._strength_lbl.setFixedWidth(70)
+        self._strength_lbl.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        row.addWidget(self._strength_lbl)
+        self.form_layout.addWidget(host)
 
-    def _update_strength(self, _event=None):
+    def _update_strength(self, _text=""):
         pw = self.f_pass.get()
         score = _strength(pw)
-        colors = {1: ERROR, 2: WARN, 3: TEAL}
+        colors = {1: T.error, 2: T.warn, 3: T.success}      # semantic colors, not brand colors
         names = {0: "Too short" if pw else "", 1: "Weak", 2: "Okay", 3: "Strong"}
         for i, seg in enumerate(self._segments):
-            seg.config(bg=colors[score] if i < score else FIELD)
-        self._strength_lbl.config(text=names[score], fg=colors.get(score, DIM))
+            color = colors[score] if i < score else "rgba(255,255,255,25)"
+            seg.setStyleSheet(f"background: {color}; border-radius: 2px;")
+        self._strength_lbl.setStyleSheet(
+            f"color: {colors.get(score, T.dim)}; font-size: 9pt; background: transparent;")
+        self._strength_lbl.setText(names[score])
 
     # ---------- status / busy ----------
     def _set_status(self, text, kind="error"):
-        color = {"error": ERROR, "info": DIM, "success": TEAL}[kind]
-        self.status.config(text=text, fg=color)
+        color = {"error": T.error, "info": T.dim, "success": T.success}[kind]
+        if text:
+            self.status.setStyleSheet(
+                f"background: rgba(4,6,12,170); border-radius: 8px; padding: 6px 10px;"
+                f" color: {color}; font-size: 9pt;")
+        else:
+            self.status.setStyleSheet("background: transparent;")
+        self.status.setText(text)
 
     def _begin(self, button_text):
         self._busy = True
-        self.button.set_enabled(False)
-        self.button.set_text(button_text)
+        self.button.setEnabled(False)
+        self.button.setText(button_text)
         self._set_status("")
 
     def _end(self):
         self._busy = False
-        self.button.set_enabled(True)
-        self.button.set_text("Log In" if self.mode == "login" else "Create Account")
+        self.button.setEnabled(True)
+        self.button.setText("Log In" if self.mode == "login" else "Create Account")
 
     def _switch(self, mode):
         if self._busy or mode == self.mode:
+            self._style_tabs()          # a click on the active tab must not un-highlight it
             return
         self.mode = mode
         self._render_form()
 
-    # ---------- background work (keeps the window responsive) ----------
+    # ---------- background work ----------
     def _run(self, work, done):
-        def target():
-            try:
-                result = work()
-            except Exception as e:
-                result = (False, str(e))
-            self._queue.put(lambda: done(result))
-        threading.Thread(target=target, daemon=True).start()
-
-    def _poll(self):
-        while True:
-            try:
-                fn = self._queue.get_nowait()
-            except queue.Empty:
-                break
-            try:
-                fn()
-            except Exception as e:
-                print(f"[login_ui] callback error: {e}")
-        if self._alive:
-            try:
-                self.root.after(50, self._poll)
-            except tk.TclError:
-                pass
+        run_async(work, done, fail=lambda msg: done((False, msg)))
 
     # ---------- actions ----------
     def _submit(self):
@@ -371,8 +373,6 @@ class LoginScreen:
     def _login_done(self, res, email):
         ok, result = res
         if ok:
-            self._alive = False                  # stop polling; this screen is done
-            self.root.resizable(True, True)      # main UI may need a resizable window
             self.on_login_success(result, email)
         else:
             self._end()

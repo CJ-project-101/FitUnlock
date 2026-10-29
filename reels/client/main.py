@@ -99,6 +99,7 @@ class Backend(QObject):
 
     toast = Signal(str)
     feedReloaded = Signal()
+    viewerReady = Signal(int)
     commentsLoaded = Signal(int, list)
     commentsFailed = Signal(int, str)
     profileLoaded = Signal(str, dict)
@@ -112,6 +113,7 @@ class Backend(QObject):
         self._pool = ThreadPoolExecutor(max_workers=4)
         self._done.connect(self._dispatch)
         self._model = ReelModel(self)
+        self._viewer = ReelModel(self)      # reels shown in the profile viewer
         self._settings = QSettings("Reelz", "Reelz")
         self._signed_in = self._busy = self._locked = False
         self._loading = self._uploading = False
@@ -159,6 +161,9 @@ class Backend(QObject):
     # ---------- properties ----------
     @Property(QObject, constant=True)
     def reels(self): return self._model
+
+    @Property(QObject, constant=True)
+    def viewer(self): return self._viewer
 
     @Property(bool, notify=signedInChanged)
     def signedIn(self): return self._signed_in
@@ -271,31 +276,39 @@ class Backend(QObject):
         self._run(lambda: self.api.feed(offset, PAGE), ok, fail)
 
     # ---------- likes ----------
-    @Slot(int)
-    def toggleLike(self, row):
-        it = self._model.item(row)
+    def _model_for(self, which):
+        return self._viewer if which == "viewer" else self._model
+
+    def _patch_all(self, rid, **changes):
+        for m in (self._model, self._viewer):
+            r = m.find(rid)
+            if r >= 0:
+                m.patch(r, **changes)
+
+    @Slot(str, int)
+    def toggleLikeIn(self, which, row):
+        it = self._model_for(which).item(row)
         if not it or it["reelId"] in self._likes_busy:
             return
         rid, want = it["reelId"], not it["liked"]
         self._likes_busy.add(rid)
-        self._model.patch(row, liked=want, likes=it["likes"] + (1 if want else -1))   # optimistic
+        self._patch_all(rid, liked=want, likes=it["likes"] + (1 if want else -1))   # optimistic
 
         def fail(e):
             self._likes_busy.discard(rid)
-            r = self._model.find(rid)
-            if r >= 0:
-                cur = self._model.item(r)
-                self._model.patch(r, liked=not want, likes=cur["likes"] + (-1 if want else 1))
+            self._patch_all(rid, liked=not want, likes=it["likes"])                 # put it back
             self.toast.emit(str(e))
         self._run(lambda: self.api.like(rid, want), lambda _: self._likes_busy.discard(rid), fail)
+
+    @Slot(int)
+    def toggleLike(self, row):
+        self.toggleLikeIn("feed", row)
 
     # ---------- comments ----------
     @Slot(int)
     def loadComments(self, reel_id):
         def ok(rows):
-            r = self._model.find(reel_id)
-            if r >= 0:
-                self._model.patch(r, comments=len(rows))
+            self._patch_all(reel_id, comments=len(rows))
             self.commentsLoaded.emit(reel_id, rows)
         self._run(lambda: self.api.comments(reel_id), ok,
                   lambda e: self.commentsFailed.emit(reel_id, str(e)))
@@ -306,6 +319,14 @@ class Backend(QObject):
                   lambda _: self.loadComments(reel_id), lambda e: self.toast.emit(str(e)))
 
     # ---------- profiles ----------
+
+    @Slot(str, int)
+    def openUserReels(self, name, index):
+        def ok(items):
+            self._viewer.reset([convert(d) for d in items])
+            self.viewerReady.emit(index)
+        self._run(lambda: self.api.user_reels(name), ok, lambda e: self.toast.emit(str(e)))
+
     @Slot(str)
     def loadProfile(self, name):
         def ok(p):
