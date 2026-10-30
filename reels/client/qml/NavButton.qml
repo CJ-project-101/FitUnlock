@@ -9,6 +9,7 @@ Rectangle {
     property bool selected: false
     property bool available: true
     property bool showLabel: true
+    property int badge: 0
     signal clicked()
 
     implicitHeight: 48
@@ -36,6 +37,18 @@ Rectangle {
             opacity: nb.available ? 1 : 0.4
             font.pixelSize: 16
             font.bold: nb.selected
+        }
+    }
+    Rectangle {
+        visible: nb.badge > 0
+        x: 34; y: 6
+        width: Math.max(18, badgeText.implicitWidth + 8); height: 18; radius: 9
+        color: Theme.like
+        Text {
+            id: badgeText
+            anchors.centerIn: parent
+            text: nb.badge > 99 ? "99+" : nb.badge
+            color: "white"; font.pixelSize: 11; font.bold: true
         }
     }
     HoverHandler { id: hover; cursorShape: nb.available ? Qt.PointingHandCursor : Qt.ArrowCursor }

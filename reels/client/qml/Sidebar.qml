@@ -11,6 +11,20 @@ Rectangle {
     color: Theme.bg
     Behavior on width { NumberAnimation { duration: 150 } }
 
+    readonly property var items: {
+        var a = [
+            { key: "explore",  label: "Explore",       icon: Icons.explore },
+            { key: "reels",    label: "Reels",         icon: Icons.reels },
+            { key: "search",   label: "Search",        icon: Icons.search },
+            { key: "activity", label: "Notifications", icon: Icons.heart },
+            { key: "messages", label: "Messages",      icon: Icons.send },
+            { key: "upload",   label: "Create",        icon: Icons.plus },
+            { key: "profile",  label: "Profile",       icon: Icons.user }
+        ]
+        if (backend.isAdmin) a.push({ key: "moderation", label: "ReelGuard", icon: Icons.shield })
+        return a
+    }
+
     Rectangle { width: 1; height: parent.height; anchors.right: parent.right; color: Theme.border }
 
     ColumnLayout {
@@ -33,23 +47,16 @@ Rectangle {
         }
 
         Repeater {
-            model: [
-                { key: "reels",    label: "Reels",         icon: Icons.reels,  ok: true },
-                { key: "search",   label: "Search",        icon: Icons.search, ok: true },
-                { key: "explore",  label: "Explore",       icon: Icons.explore, ok: true },
-                { key: "activity", label: "Notifications", icon: Icons.heart,  ok: false },
-                { key: "messages", label: "Messages",      icon: Icons.send,   ok: false },
-                { key: "upload",   label: "Create",        icon: Icons.plus,   ok: true },
-                { key: "profile",  label: "Profile",       icon: Icons.user,   ok: true }
-            ]
+            model: bar.items
             delegate: NavButton {
                 required property var modelData
                 Layout.fillWidth: true
                 label: modelData.label
                 icon: modelData.icon
-                available: modelData.ok
                 showLabel: bar.wide
                 selected: bar.current === modelData.key
+                badge: modelData.key === "activity" ? backend.unreadNotifications
+                     : modelData.key === "messages" ? backend.unreadMessages : 0
                 onClicked: bar.navigate(modelData.key)
             }
         }

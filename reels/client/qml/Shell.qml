@@ -12,6 +12,11 @@ Item {
         viewerOpen = true
         viewer.jumpTo(index)
     }
+    function openChat(name) {
+        viewerOpen = false
+        page = "messages"
+        messagesPage.open(name)
+    }
 
     // one place adds up everything that is playing and tells the backend (this is what spends minutes)
     readonly property bool watching: reelsPage.watching || viewer.watching
@@ -36,13 +41,18 @@ Item {
 
         Backdrop { anchors.fill: parent }
 
-        ExplorePage { anchors.fill: parent; visible: shell.page === "explore"
-                      onOpenReel: (index) => shell.openViewer("feed", index) }
-        FeedPage    { id: reelsPage; anchors.fill: parent; visible: shell.page === "reels"
-                      active: shell.page === "reels" && !shell.viewerOpen }
-        SearchPage  { anchors.fill: parent; visible: shell.page === "search" }
-        UploadPage  { anchors.fill: parent; visible: shell.page === "upload"; onUploaded: shell.page = "reels" }
-        ProfileView { anchors.fill: parent; visible: shell.page === "profile"; who: backend.username }
+        ExplorePage       { anchors.fill: parent; visible: shell.page === "explore"
+                            onOpenReel: (index) => shell.openViewer("feed", index) }
+        FeedPage          { id: reelsPage; anchors.fill: parent; visible: shell.page === "reels"
+                            active: shell.page === "reels" && !shell.viewerOpen }
+        SearchPage        { anchors.fill: parent; visible: shell.page === "search"
+                            onMessageRequested: (name) => shell.openChat(name) }
+        NotificationsPage { anchors.fill: parent; visible: shell.page === "activity" }
+        MessagesPage      { id: messagesPage; anchors.fill: parent; visible: shell.page === "messages" }
+        UploadPage        { anchors.fill: parent; visible: shell.page === "upload"; onUploaded: shell.page = "reels" }
+        ProfileView       { anchors.fill: parent; visible: shell.page === "profile"; who: backend.username
+                            onMessageRequested: (name) => shell.openChat(name) }
+        ModerationPage    { anchors.fill: parent; visible: shell.page === "moderation" }
 
         // full-screen viewer (opened from a profile or from Explore)
         Backdrop { anchors.fill: parent; z: 49; visible: shell.viewerOpen }

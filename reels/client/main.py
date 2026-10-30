@@ -15,7 +15,7 @@ from api import Api, BASE
 PAGE = 20
 MAX_BYTES = 100 * 1024 * 1024
 ALLOWED = {".mp4", ".mov", ".webm", ".mkv"}      # matches the server
-KEYS = ["reelId", "author", "caption", "videoUrl", "thumbUrl", "likes", "comments", "liked"]
+KEYS = ["reelId", "author", "caption", "videoUrl", "thumbUrl", "likes", "comments", "liked", "avatarUrl"]
 ROLE = {k: int(Qt.ItemDataRole.UserRole) + 1 + i for i, k in enumerate(KEYS)}
 
 
@@ -25,13 +25,16 @@ FITPLAY_PY = FITPLAY_ROOT / "venv" / "Scripts" / "python.exe"    # FitPlay's own
 
 
 
+def absurl(u):
+    return (BASE + u) if u else ""
+
 def convert(d):
     """Server reel dict -> flat dict used by the QML model."""
     return {"reelId": d["id"], "author": d["author"], "caption": d.get("caption") or "",
             "videoUrl": BASE + d["video_url"],
             "thumbUrl": (BASE + d["thumb_url"]) if d.get("thumb_url") else "",
-            "likes": d["likes"], "comments": d["comments"], "liked": d["liked"]}
-
+            "likes": d["likes"], "comments": d["comments"], "liked": d["liked"],
+            "avatarUrl": absurl(d.get("author_avatar"))}
 
 class ReelModel(QAbstractListModel):
     def __init__(self, parent=None):
@@ -107,6 +110,18 @@ class Backend(QObject):
     uploadSucceeded = Signal()
     uploadFailed = Signal(str)
 
+    meChanged = Signal()
+    activityChanged = Signal()
+    notificationsLoaded = Signal(list)
+    conversationsLoaded = Signal(list)
+    threadLoaded = Signal(str, dict)
+    threadFailed = Signal(str, str)
+    profileSaved = Signal()
+    guardFlagged = Signal(int, str, dict)
+    commentPosted = Signal(int)
+    modSummaryLoaded = Signal(dict)
+    modLogLoaded = Signal(list)
+
     def __init__(self):
         super().__init__()
         self.api = Api()
@@ -131,6 +146,12 @@ class Backend(QObject):
         self._tick_timer = QTimer(self)                  # smooth 1-second display countdown
         self._tick_timer.timeout.connect(self._tick)
         self._tick_timer.start(1000)
+        self._is_admin = False
+        self._avatar = ""
+        self._notif = self._msgs = 0
+        self._act_busy = False
+        self._act_timer = QTimer(self)
+        self._act_timer.timeout.connect(self._poll_activity)
 
     # ---------- plumbing ----------
     def _run(self, fn, ok=None, fail=None):
@@ -145,13 +166,18 @@ class Backend(QObject):
     @Slot(object)
     def _dispatch(self, pack):
         ok, fail, res, exc = pack
-        if exc is not None:
-            if fail:
-                fail(exc)
-            else:
-                self.toast.emit(str(exc))
-        elif ok:
-            ok(res)
+        try:
+            if exc is not None:
+                if fail:
+                    fail(exc)
+                else:
+                    self.toast.emit(str(exc))
+            elif ok:
+                ok(res)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            self.toast.emit(f"Internal error: {e}")
 
     def _set(self, attr, value, signal):
         if getattr(self, attr) != value:
@@ -192,6 +218,18 @@ class Backend(QObject):
     @Property(bool, notify=uploadingChanged)
     def uploading(self): return self._uploading
 
+    @Property(bool, notify=meChanged)
+    def isAdmin(self): return self._is_admin
+
+    @Property(str, notify=meChanged)
+    def avatarUrl(self): return self._avatar
+
+    @Property(int, notify=activityChanged)
+    def unreadNotifications(self): return self._notif
+
+    @Property(int, notify=activityChanged)
+    def unreadMessages(self): return self._msgs
+
     # ---------- auth ----------
     @Slot(str, str, str)
     def authenticate(self, username, password, mode):
@@ -229,10 +267,18 @@ class Backend(QObject):
         self.loadFeed()
         self._gate_timer.start(5000)
         self._poll_gate()
+        self.loadMe()
+        self._act_timer.start(6000)
+        self._poll_activity()
 
     @Slot()
     def logout(self):
         # CHANGED: reset the gate state first
+        self._act_timer.stop()
+        self._notif = self._msgs = 0
+        self._set("_is_admin", False, self.meChanged)
+        self._set("_avatar", "", self.meChanged)
+        self.activityChanged.emit()
         self._watching = False
         self._left = None
         self._gate_timer.stop()
@@ -305,18 +351,49 @@ class Backend(QObject):
         self.toggleLikeIn("feed", row)
 
     # ---------- comments ----------
+    def _patch_all(self, rid, **changes):
+        """Update the same reel in the feed list and in the viewer list."""
+        for m in (self._model, self._viewer):
+            r = m.find(rid)
+            if r >= 0:
+                m.patch(r, **changes)
+
     @Slot(int)
     def loadComments(self, reel_id):
         def ok(rows):
-            self._patch_all(reel_id, comments=len(rows))
-            self.commentsLoaded.emit(reel_id, rows)
+            try:
+                out = [{"author": r.get("author", "?"), "text": r.get("text", ""),
+                        "avatar": absurl(r.get("avatar_url"))} for r in rows]
+                self._patch_all(reel_id, comments=len(out))
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                self.commentsFailed.emit(reel_id, f"Could not read comments: {e}")
+                return
+            self.commentsLoaded.emit(reel_id, out)
         self._run(lambda: self.api.comments(reel_id), ok,
                   lambda e: self.commentsFailed.emit(reel_id, str(e)))
 
     @Slot(int, str)
-    def addComment(self, reel_id, text):
-        self._run(lambda: self.api.add_comment(reel_id, text),
-                  lambda _: self.loadComments(reel_id), lambda e: self.toast.emit(str(e)))
+    def submitComment(self, reel_id, text):
+        """ReelGuard check first. Safe comments are posted, flagged ones go back to the user for review."""
+        text = text.strip()
+        if not text:
+            return
+
+        def ok(v):
+            if v["label"] == "safe":
+                self.postComment(reel_id, text, False)
+            else:
+                self.guardFlagged.emit(reel_id, text, v)
+        self._run(lambda: self.api.check_comment(reel_id, text), ok, lambda e: self.toast.emit(str(e)))
+
+    @Slot(int, str, bool)
+    def postComment(self, reel_id, text, confirmed):
+        def ok(_):
+            self.commentPosted.emit(reel_id)
+            self.loadComments(reel_id)
+        self._run(lambda: self.api.add_comment(reel_id, text, confirmed), ok, lambda e: self.toast.emit(str(e)))
 
     # ---------- profiles ----------
 
@@ -333,6 +410,7 @@ class Backend(QObject):
             p["reels"] = [{"id": r["id"], "caption": r.get("caption") or "",
                            "thumbUrl": (BASE + r["thumb_url"]) if r.get("thumb_url") else ""}
                           for r in p["reels"]]
+            p["avatar_url"] = absurl(p.get("avatar_url"))
             self.profileLoaded.emit(name, p)
         self._run(lambda: self.api.profile(name), ok, lambda e: self.profileFailed.emit(name, str(e)))
 
@@ -371,6 +449,96 @@ class Backend(QObject):
             self._set("_uploading", False, self.uploadingChanged)
             self.uploadFailed.emit(str(e))
         self._run(lambda: self.api.upload(path, caption), ok, fail)
+
+
+    # ---------- me, profile picture, bio ----------
+    @Slot()
+    def loadMe(self):
+        def ok(m):
+            self._set("_is_admin", bool(m.get("is_admin")), self.meChanged)
+            self._set("_avatar", absurl(m.get("avatar_url")), self.meChanged)
+        self._run(self.api.me, ok, lambda e: None)
+
+    @Slot(str)
+    def chooseAvatar(self, url):
+        path = QUrl(url).toLocalFile()
+
+        def ok(_):
+            self.loadMe()
+            self.profileSaved.emit()
+            self.toast.emit("Profile photo updated")
+        self._run(lambda: self.api.upload_avatar(path), ok, lambda e: self.toast.emit(str(e)))
+
+    @Slot(str)
+    def saveBio(self, bio):
+        def ok(_):
+            self.profileSaved.emit()
+            self.toast.emit("Profile updated")
+        self._run(lambda: self.api.save_bio(bio), ok, lambda e: self.toast.emit(str(e)))
+
+    # ---------- notifications and messages ----------
+    def _poll_activity(self):
+        if not self._signed_in or self._act_busy:
+            return
+        self._act_busy = True
+
+        def ok(a):
+            self._act_busy = False
+            self._set("_notif", a["notifications"], self.activityChanged)
+            self._set("_msgs", a["messages"], self.activityChanged)
+        self._run(self.api.activity, ok, lambda e: setattr(self, "_act_busy", False))
+
+    @Slot()
+    def loadNotifications(self):
+        def ok(rows):
+            for r in rows:
+                r["avatar_url"] = absurl(r.get("avatar_url"))
+            self.notificationsLoaded.emit(rows)
+        self._run(self.api.notifications, ok, lambda e: self.toast.emit(str(e)))
+
+    @Slot()
+    def markNotificationsRead(self):
+        self._run(self.api.notifications_read, lambda _: self._set("_notif", 0, self.activityChanged), lambda e: None)
+
+    @Slot()
+    def loadConversations(self):
+        def ok(rows):
+            for r in rows:
+                r["avatar_url"] = absurl(r.get("avatar_url"))
+            self.conversationsLoaded.emit(rows)
+        self._run(self.api.conversations, ok, lambda e: None)
+
+    @Slot(str)
+    def loadThread(self, name):
+        def ok(d):
+            d["user"]["avatar_url"] = absurl(d["user"].get("avatar_url"))
+            self.threadLoaded.emit(name, d)
+            self._poll_activity()                    # reading a chat lowers the unread badge
+        self._run(lambda: self.api.thread(name), ok, lambda e: self.threadFailed.emit(name, str(e)))
+
+    @Slot(str, str)
+    def sendMessage(self, name, text):
+        text = text.strip()
+        if not text:
+            return
+
+        def ok(_):
+            self.loadThread(name)
+            self.loadConversations()
+        self._run(lambda: self.api.send_message(name, text), ok, lambda e: self.toast.emit(str(e)))
+
+    # ---------- ReelGuard dashboard ----------
+    @Slot(str)
+    def loadModeration(self, label):
+        self._run(self.api.mod_summary, lambda s: self.modSummaryLoaded.emit(s), lambda e: self.toast.emit(str(e)))
+        self._run(lambda: self.api.mod_log(label), lambda rows: self.modLogLoaded.emit(rows),
+                  lambda e: self.toast.emit(str(e)))
+
+    @Slot(int, str)
+    def removeComment(self, cid, label):
+        self._run(lambda: self.api.mod_remove(cid), lambda _: self.loadModeration(label),
+                  lambda e: self.toast.emit(str(e)))
+
 
     # ---------- FitPlay gate ----------
     # CHANGED: this whole section replaces the old _poll_gate

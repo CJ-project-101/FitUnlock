@@ -1,4 +1,7 @@
 import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import QtQuick.Dialogs
 
 Item {
     id: pv
@@ -6,6 +9,7 @@ Item {
     property var info: null
     property string error: ""
     property bool loading: false
+    signal messageRequested(string name)
 
     readonly property int cell: Math.max(90, Math.floor(Math.min(240, (width - 32) / 3)))
 
@@ -28,6 +32,7 @@ Item {
             if (name !== pv.who) return
             pv.loading = false; pv.info = null; pv.error = msg
         }
+        function onProfileSaved() { if (pv.visible) pv.reload() }
     }
 
     Text {
@@ -62,29 +67,48 @@ Item {
                 id: head
                 y: 24
                 spacing: 28
-                Avatar { name: pv.info ? pv.info.username : ""; size: 96 }
+                Avatar { name: pv.info ? pv.info.username : ""; source: pv.info ? pv.info.avatar_url : ""; size: 96 }
                 Column {
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 12
-                    Text {
-                        text: pv.info ? pv.info.username : ""
-                        color: Theme.text; font.pixelSize: 22; font.bold: true
-                    }
+                    spacing: 10
+                    Text { text: pv.info ? pv.info.username : ""; color: Theme.text; font.pixelSize: 22; font.bold: true }
                     Row {
-                        spacing: 22
+                        spacing: 20
                         Text { textFormat: Text.StyledText; color: Theme.text; text: "<b>" + (pv.info ? pv.info.reels.length : 0) + "</b> reels" }
                         Text { textFormat: Text.StyledText; color: Theme.text; text: "<b>" + (pv.info ? pv.info.followers : 0) + "</b> followers" }
                         Text { textFormat: Text.StyledText; color: Theme.text; text: "<b>" + (pv.info ? pv.info.following : 0) + "</b> following" }
                     }
-                    PillButton {
-                        visible: pv.info && !pv.info.is_me
-                        text: pv.info && pv.info.i_follow ? "Following" : "Follow"
-                        fill: pv.info && pv.info.i_follow ? Theme.card : Theme.accent
-                        textColor: pv.info && pv.info.i_follow ? Theme.text : "white"
-                        onClicked: backend.setFollow(pv.info.username, !pv.info.i_follow)
+                    Text {
+                        visible: pv.info !== null && pv.info.bio !== ""
+                        width: Math.max(160, grid.width - 96 - 28 - 8)
+                        text: pv.info ? pv.info.bio : ""
+                        color: Theme.text; font.pixelSize: 14
+                        wrapMode: Text.Wrap
+                    }
+                    Row {
+                        spacing: 8
+                        PillButton {
+                            visible: pv.info !== null && pv.info.is_me
+                            text: "Edit profile"
+                            fill: Theme.card; textColor: Theme.text
+                            onClicked: edit.open()
+                        }
+                        PillButton {
+                            visible: pv.info !== null && !pv.info.is_me
+                            text: pv.info && pv.info.i_follow ? "Following" : "Follow"
+                            fill: pv.info && pv.info.i_follow ? Theme.card : Theme.accent
+                            textColor: pv.info && pv.info.i_follow ? Theme.text : "white"
+                            onClicked: backend.setFollow(pv.info.username, !pv.info.i_follow)
+                        }
+                        PillButton {
+                            visible: pv.info !== null && !pv.info.is_me
+                            text: "Message"
+                            fill: Theme.card; textColor: Theme.text
+                            onClicked: pv.messageRequested(pv.info.username)
+                        }
                     }
                     Text {
-                        visible: pv.info && pv.info.reels.length === 0
+                        visible: pv.info !== null && pv.info.reels.length === 0
                         text: "No reels yet"
                         color: Theme.muted
                     }
@@ -129,6 +153,49 @@ Item {
                     cursorShape: Qt.PointingHandCursor
                     onClicked: backend.openUserReels(pv.info.username, tile.index)
                 }
+            }
+        }
+    }
+
+    // ---- edit profile (photo + bio) ----
+    FileDialog {
+        id: photoDialog
+        title: "Choose a profile photo"
+        nameFilters: ["Images (*.png *.jpg *.jpeg *.webp *.bmp)"]
+        onAccepted: backend.chooseAvatar(selectedFile.toString())
+    }
+    Popup {
+        id: edit
+        modal: true
+        padding: 24
+        width: Math.min(420, pv.width - 40)
+        anchors.centerIn: Overlay.overlay
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        onOpened: bioField.text = pv.info ? pv.info.bio : ""
+        background: Rectangle { color: Theme.panel; radius: 16; border.color: Theme.border }
+        Overlay.modal: Rectangle { color: "#AA000000" }
+
+        contentItem: ColumnLayout {
+            spacing: 14
+            Text { text: "Edit profile"; color: Theme.text; font.pixelSize: 20; font.bold: true }
+            RowLayout {
+                spacing: 16
+                Avatar { name: backend.username; source: backend.avatarUrl; size: 80 }
+                PillButton { text: "Change photo"; fill: Theme.card; textColor: Theme.text; onClicked: photoDialog.open() }
+            }
+            Text { text: "Bio"; color: Theme.muted }
+            AppTextField {
+                id: bioField
+                Layout.fillWidth: true
+                maximumLength: 150
+                placeholderText: "Tell people about yourself"
+            }
+            Text { Layout.alignment: Qt.AlignRight; text: bioField.text.length + " / 150"; color: Theme.muted; font.pixelSize: 12 }
+            RowLayout {
+                Layout.alignment: Qt.AlignRight
+                spacing: 10
+                PillButton { text: "Cancel"; fill: Theme.card; textColor: Theme.text; onClicked: edit.close() }
+                PillButton { text: "Save"; onClicked: { backend.saveBio(bioField.text); edit.close() } }
             }
         }
     }

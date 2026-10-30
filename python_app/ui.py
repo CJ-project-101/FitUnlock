@@ -33,7 +33,7 @@ MAX_BANK_SECONDS = 3600
 BANK_POLL_MS = 1000          # how often the bank display re-reads session.json
 GAME_START_GRACE_MS = 3000   # give the game time to appear before we start checking it
 GAME_CHECK_MS = 2000         # how often we check whether the game has closed
-
+REELS_WINDOW_TITLE = "Reelz" 
 # ── EDIT THESE ──────────────────────────────────────────────────────────
 REELS_DIR = Path(r"D:\Major project\reels\client")                           # folder with main.py and qml/
 REELS_PYTHON = Path(r"D:\Major project\reels\.venv\Scripts\python.exe")      # python that has PySide6
@@ -381,12 +381,26 @@ class FitPlayApp(BackdropPage):
 
         proc = self._reels_proc
         if proc is not None and proc.poll() is None:
-            self._set_status("Reels is already open.", "info")
-            return
+            if get_banked_seconds() <= 0:
+                self._set_status("Reels is open, but you have no minutes. Complete an exercise first.", "info")
+                _focus_window_by_title(REELS_WINDOW_TITLE)
+                return
+            # New minutes earned: close the old (locked) client so a fresh one claims them.
+            flags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
+            subprocess.run(["taskkill", "/F", "/T", "/PID", str(proc.pid)],
+                           capture_output=True, creationflags=flags)
+            try:
+                proc.wait(timeout=3)
+            except subprocess.TimeoutExpired:
+                pass
+            self._reels_proc = None
+            reclaim_stale_social()      # return any unused time from the old session
+            self._refresh_stats()
 
         status = social_status()
         if status == "running":
-            self._set_status("A Reels session is already running. Switch to the Reels window.", "info")
+            self._set_status("A Reels session is already running. Switching to it...", "info")
+            _focus_window_by_title(REELS_WINDOW_TITLE)
             return
         if status == "unlocked":
             # time was already granted but the app is not open: just open it again

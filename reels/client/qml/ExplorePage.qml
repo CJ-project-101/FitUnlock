@@ -32,6 +32,7 @@ Item {
             required property string thumbUrl
             required property int likes
             required property int comments
+            required property string avatarUrl
             width: grid.cellWidth
             height: grid.cellHeight
 
@@ -64,7 +65,7 @@ Item {
                 Row {
                     anchors { left: parent.left; bottom: parent.bottom; margins: 10 }
                     spacing: 8
-                    Avatar { name: tile.author; size: 22 }
+                    Avatar { name: tile.author; source: tile.avatarUrl; size: 22 }
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
                         text: tile.author

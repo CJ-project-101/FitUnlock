@@ -8,6 +8,8 @@ Rectangle {
     property int reelId: -1
     property bool loading: false
     property string error: ""
+    property var review: null            // ReelGuard verdict while a flagged comment waits for the user
+    property string reviewText: ""
     signal closed()
 
     width: Math.min(400, parent.width)
@@ -27,6 +29,7 @@ Rectangle {
         reelId = id
         cm.clear()
         error = ""
+        review = null
         loading = true
         opened = true
         backend.loadComments(id)
@@ -36,8 +39,8 @@ Rectangle {
     function post() {
         var t = input.text.trim()
         if (t.length === 0) return
-        backend.addComment(reelId, t)
-        input.clear()
+        review = null
+        backend.submitComment(reelId, t)        // ReelGuard checks it first
     }
 
     Connections {
@@ -47,12 +50,23 @@ Rectangle {
             panel.loading = false
             panel.error = ""
             cm.clear()
-            for (var i = 0; i < list.length; i++) cm.append({ author: list[i].author, text: list[i].text })
+            for (var i = 0; i < list.length; i++)
+                cm.append({ author: list[i].author, text: list[i].text, avatar: list[i].avatar })
         }
         function onCommentsFailed(id, msg) {
             if (id !== panel.reelId) return
             panel.loading = false
             panel.error = msg
+        }
+        function onGuardFlagged(id, text, v) {
+            if (id !== panel.reelId) return
+            panel.review = v
+            panel.reviewText = text
+        }
+        function onCommentPosted(id) {
+            if (id !== panel.reelId) return
+            input.clear()
+            panel.review = null
         }
     }
 
@@ -87,9 +101,10 @@ Rectangle {
                     id: r
                     required property string author
                     required property string text
+                    required property string avatar
                     spacing: 12
                     width: cl.width
-                    Avatar { name: r.author; size: 34 }
+                    Avatar { name: r.author; source: r.avatar; size: 34 }
                     Column {
                         width: r.width - 46
                         spacing: 2
@@ -98,12 +113,7 @@ Rectangle {
                     }
                 }
             }
-            Text {
-                anchors.centerIn: parent
-                visible: panel.loading
-                text: "Loading comments…"
-                color: Theme.muted
-            }
+            Text { anchors.centerIn: parent; visible: panel.loading; text: "Loading comments…"; color: Theme.muted }
             Text {
                 anchors.centerIn: parent
                 width: parent.width - 32
@@ -122,6 +132,64 @@ Rectangle {
             }
         }
 
+        // ---- ReelGuard review card ----
+        Rectangle {
+            id: card
+            Layout.fillWidth: true
+            visible: panel.review !== null
+            implicitHeight: cardCol.implicitHeight + 28
+            radius: 12
+            color: Theme.card
+            border.width: 1
+            border.color: panel.review && panel.review.label === "threatening" ? Theme.like : "#f5a524"
+
+            Column {
+                id: cardCol
+                x: 14; y: 14
+                width: parent.width - 28
+                spacing: 8
+                Row {
+                    spacing: 8
+                    Icon {
+                        size: 20; path: Icons.shield
+                        color: card.border.color
+                    }
+                    Text {
+                        text: panel.review ? "ReelGuard flagged this as " + panel.review.label : ""
+                        color: Theme.text; font.bold: true; font.pixelSize: 14
+                    }
+                }
+                Text {
+                    width: parent.width
+                    wrapMode: Text.Wrap
+                    color: Theme.muted; font.pixelSize: 13
+                    text: panel.review ? panel.review.reasons.join("\n") + "\nConfidence: " + Math.round(panel.review.score * 100) + "%" : ""
+                }
+                Text {
+                    width: parent.width
+                    wrapMode: Text.Wrap
+                    color: Theme.text; font.pixelSize: 13
+                    text: panel.review && panel.review.blocked
+                          ? "Threats can't be posted. Please edit your comment."
+                          : "Please review it. You can edit it, or post it anyway."
+                }
+                Row {
+                    spacing: 8
+                    PillButton {
+                        text: "Edit comment"
+                        fill: Theme.hover; textColor: Theme.text
+                        onClicked: { panel.review = null; input.forceActiveFocus() }
+                    }
+                    PillButton {
+                        visible: panel.review !== null && !panel.review.blocked
+                        text: "Post anyway"
+                        fill: "#f5a524"; textColor: "#1a1a1a"
+                        onClicked: { backend.postComment(panel.reelId, panel.reviewText, true); panel.review = null }
+                    }
+                }
+            }
+        }
+
         RowLayout {
             Layout.fillWidth: true
             spacing: 8
@@ -131,6 +199,7 @@ Rectangle {
                 placeholderText: "Add a comment…"
                 maximumLength: 500
                 onAccepted: panel.post()
+                onTextChanged: if (panel.review !== null && text.trim() !== panel.reviewText) panel.review = null
             }
             PillButton {
                 text: "Post"

@@ -3,6 +3,7 @@ import QtQuick.Layouts
 
 Item {
     id: sp
+    signal messageRequested(string name)
     AppTextField {
         id: field
         anchors { top: parent.top; horizontalCenter: parent.horizontalCenter; topMargin: 24 }
@@ -13,6 +14,7 @@ Item {
     ProfileView {
         id: view
         anchors { top: field.bottom; topMargin: 8; left: parent.left; right: parent.right; bottom: parent.bottom }
+        onMessageRequested: (name) => sp.messageRequested(name)
     }
     Text {
         anchors.centerIn: parent

@@ -19,3 +19,6 @@ Toast Toast.qml
 Backdrop Backdrop.qml
 Stickman Stickman.qml
 ExplorePage ExplorePage.qml
+NotificationsPage NotificationsPage.qml
+MessagesPage MessagesPage.qml
+ModerationPage ModerationPage.qml

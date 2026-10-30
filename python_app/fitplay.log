@@ -1,0 +1,12 @@
+==================================================
+  FitPlay - Starting Up
+==================================================
+[main.py] Started in NORMAL mode.
+[session.py] Active session locked. Bank preserved.
+[main.py] Saved login found - skipping login screen.
+[main.py] Starting Qt event loop...
+[session.py] Play session: 18 sec. Bank left: 0 sec
+[main.py] Launching game: D:\Major project\unity_build\Platformer_Wellness.exe
+[main.py] Another launch asked FitPlay to come forward.
+[main.py] FitPlay closing.
+[main.py] FitPlay closed.

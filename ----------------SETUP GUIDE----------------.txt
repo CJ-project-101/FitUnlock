@@ -1,0 +1,24 @@
+# FitPlay: Quick Setup Guide
+
+## Before you start
+- Windows laptop with a working webcam
+- Internet connection (first time only)
+- **Python 3.11** installed, with **"Add python.exe to PATH"** ticked
+
+## Steps
+
+1. **Copy** the whole project folder to the laptop (without the `venv` folder).
+2. **Double-click `setup.bat`** and wait until it finishes. This creates the environment and installs everything from `requirements.txt`. It takes a few minutes and only needs to be done once.
+3. **Double-click `FitPlay.vbs`** to start everything (reels server, FitPlay app and game).
+
+## Every time after that
+Just double-click `FitPlay.vbs`.
+
+## If something doesn't work
+- Nothing opens: check `python_app\fitplay.log`
+- Reels don't load: check `reels\server\server.log`
+- Setup fails: make sure you installed Python **3.11** (not 3.12 or newer)
+- Camera not working: close other apps that use the webcam 
+
+
+or contact the person who sent this

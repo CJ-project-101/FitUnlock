@@ -14,6 +14,7 @@ Item {
     required property int likes
     required property int comments
     required property bool liked
+    required property string avatarUrl
 
     property bool isCurrent: false
     property bool muted: false
@@ -113,7 +114,7 @@ Item {
                 spacing: 8
                 Row {
                     spacing: 10
-                    Avatar { name: item.author; size: 32 }
+                    Avatar { name: item.author; source: item.avatarUrl; size: 32 }
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
                         text: item.author

@@ -1,25 +1,28 @@
 @echo off
 title FitPlay Launcher
+set "ROOT=D:\Major project"
+set "PY=%ROOT%\venv\Scripts\python.exe"
 
 echo ==========================================
 echo              FITPLAY
 echo ==========================================
 echo.
-echo Starting FitPlay Python system...
-echo.
 
-cd /d "D:\Major project\python_app"
-start "" "D:\Major project\venv\Scripts\pythonw.exe" main.py
+echo Starting reels server...
+start "Reels Server" /d "%ROOT%\reels\server" cmd /k ""%PY%" -m uvicorn main:app --port 8000"
 
 timeout /t 3 /nobreak >nul
 
-echo.
+echo Starting FitPlay Python system...
+start "FitPlay Python" /d "%ROOT%\python_app" cmd /k ""%PY%" main.py"
+
+timeout /t 3 /nobreak >nul
+
 echo Starting FitPlay Unity game...
-echo.
-
-
+REM start "" "D:\path\to\YourGame.exe"
 
 echo.
 echo ==========================================
-echo       FITPLAY STARTED
+echo           FITPLAY STARTED
 echo ==========================================
+timeout /t 3 >nul

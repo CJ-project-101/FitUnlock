@@ -1,112 +1,157 @@
-Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'http://127.0.0.1:8000/media/752c31da6ea640f6a7e91bb2af66fc59.mp4':
+Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'http://127.0.0.1:8000/media/ce0887828f6846cf9ce487a18599997d.mp4':
   Metadata:
     major_brand     : isom
     minor_version   : 512
     compatible_brands: isomiso2avc1mp41
-  Duration: 00:00:09.15, start: 0.000000, bitrate: 1892 kb/s
-  Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 960x720 [SAR 1:1 DAR 4:3], 1844 kb/s, 30 fps, 30 tbr, 15360 tbn (default)
+  Duration: 00:00:08.52, start: 0.000000, bitrate: 210 kb/s
+  Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 720x1280 [SAR 1:1 DAR 9:16], 135 kb/s, 30 fps, 30 tbr, 15360 tbn (default)
     Metadata:
       handler_name    : VideoHandler
       encoder         : AVC Coding
-  Stream #0:1[0x2](und): Audio: aac (HE-AAC) (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 70 kb/s (default)
+  Stream #0:1[0x2](und): Audio: aac (HE-AAC) (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 68 kb/s (default)
     Metadata:
       handler_name    : SoundHandler
-Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'http://127.0.0.1:8000/media/f9dc3145d14945be9e60e25efda1155a.mp4':
+Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'http://127.0.0.1:8000/media/eb76db830af5498b82ca0689e762f90c.mp4':
   Metadata:
     major_brand     : isom
     minor_version   : 512
     compatible_brands: isomiso2avc1mp41
-  Duration: 00:00:15.32, start: 0.000000, bitrate: 2003 kb/s
-  Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 1280x714, 1945 kb/s, 24 fps, 24 tbr, 12288 tbn (default)
+  Duration: 00:00:15.30, start: 0.000000, bitrate: 1416 kb/s
+  Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 720x1280, 1360 kb/s, 30 fps, 30 tbr, 15360 tbn (default)
     Metadata:
       handler_name    : VideoHandler
       encoder         : AVC Coding
-  Stream #0:1[0x2](und): Audio: aac (HE-AAC) (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 62 kb/s (default)
+  Stream #0:1[0x2](und): Audio: aac (HE-AAC) (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 60 kb/s (default)
     Metadata:
       handler_name    : SoundHandler
-[av1_mf @ 00000229AB2E9F80] could not find any MFT for the given media type
-[av1_mf @ 00000229AB2E9F80] could not create MFT
-[h264_mf @ 00000229AB2EB5C0] MFT name: 'H264 Encoder MFT'
-[hevc_mf @ 00000229AB2E9840] could not find any MFT for the given media type
-[hevc_mf @ 00000229AB2E9840] could not create MFT
-Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'http://127.0.0.1:8000/media/a688062865824ea3a28cb8934863d182.mp4':
+[av1_mf @ 0000027458574140] could not find any MFT for the given media type
+[av1_mf @ 0000027458574140] could not create MFT
+[h264_mf @ 0000027458574140] MFT name: 'H264 Encoder MFT'
+[hevc_mf @ 0000027458572EC0] could not find any MFT for the given media type
+[hevc_mf @ 0000027458572EC0] could not create MFT
+Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'http://127.0.0.1:8000/media/e669e6891f864cd5b4bef7e7c3f1ce89.mp4':
   Metadata:
     major_brand     : isom
     minor_version   : 512
     compatible_brands: isomiso2avc1mp41
-  Duration: 00:00:15.44, start: 0.000000, bitrate: 1539 kb/s
-  Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 960x720 [SAR 1:1 DAR 4:3], 1491 kb/s, 30 fps, 30 tbr, 15360 tbn (default)
-    Metadata:
-      handler_name    : VideoHandler
-      encoder         : AVC Coding
-  Stream #0:1[0x2](und): Audio: aac (HE-AAC) (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 53 kb/s (default)
-    Metadata:
-      handler_name    : SoundHandler
-Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'http://127.0.0.1:8000/media/56325f85c039441ba6f47a7645dc9cb0.mp4':
-  Metadata:
-    major_brand     : isom
-    minor_version   : 512
-    compatible_brands: isomiso2avc1mp41
-  Duration: 00:00:07.31, start: 0.000000, bitrate: 230 kb/s
-  Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709/bt709/smpte170m, progressive), 720x1280 [SAR 1:1 DAR 9:16], 158 kb/s, 30 fps, 30 tbr, 15360 tbn (default)
-    Metadata:
-      handler_name    : VideoHandler
-      encoder         : AVC Coding
-  Stream #0:1[0x2](und): Audio: aac (HE-AAC) (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 66 kb/s (default)
-    Metadata:
-      handler_name    : SoundHandler
-Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'http://127.0.0.1:8000/media/008baa50eba64639875a351523bf71c1.mp4':
-  Metadata:
-    major_brand     : isom
-    minor_version   : 512
-    compatible_brands: isomiso2avc1mp41
-  Duration: 00:00:27.70, start: 0.000000, bitrate: 243 kb/s
-  Stream #0:0[0x1](und): Video: h264 (Main) (avc1 / 0x31637661), yuv420p(progressive), 360x640 [SAR 1:1 DAR 9:16], 175 kb/s, 30 fps, 30 tbr, 15360 tbn (default)
+  Duration: 00:01:00.19, start: 0.000000, bitrate: 1205 kb/s
+  Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 720x1280 [SAR 1:1 DAR 9:16], 1138 kb/s, 30 fps, 30 tbr, 15360 tbn (default)
     Metadata:
       handler_name    : VideoHandler
       encoder         : AVC Coding
   Stream #0:1[0x2](und): Audio: aac (HE-AAC) (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 62 kb/s (default)
     Metadata:
       handler_name    : SoundHandler
-Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'http://127.0.0.1:8000/media/687958491c6242d7a98c59d3456a911a.mp4':
+Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'http://127.0.0.1:8000/media/7276f56492904665b70cc97aa94e3fef.mp4':
   Metadata:
     major_brand     : isom
     minor_version   : 512
     compatible_brands: isomiso2avc1mp41
-  Duration: 00:00:10.17, start: 0.000000, bitrate: 1633 kb/s
-  Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 720x1280, 1575 kb/s, 24 fps, 24 tbr, 12288 tbn (default)
+  Duration: 00:00:08.87, start: 0.000000, bitrate: 642 kb/s
+  Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 720x1280 [SAR 1:1 DAR 9:16], 574 kb/s, 30 fps, 30 tbr, 15360 tbn (default)
     Metadata:
       handler_name    : VideoHandler
       encoder         : AVC Coding
-  Stream #0:1[0x2](und): Audio: aac (HE-AAC) (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 71 kb/s (default)
+  Stream #0:1[0x2](und): Audio: aac (HE-AAC) (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 64 kb/s (default)
     Metadata:
       handler_name    : SoundHandler
-Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'http://127.0.0.1:8000/media/60e66c7e39f34436908477ae9fb2234d.mp4':
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000274583E47C0] stream 0, offset 0x210f: partial file
+Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'http://127.0.0.1:8000/media/7276f56492904665b70cc97aa94e3fef.mp4':
   Metadata:
     major_brand     : isom
     minor_version   : 512
     compatible_brands: isomiso2avc1mp41
-  Duration: 00:00:33.76, start: 0.000000, bitrate: 603 kb/s
-  Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 1064x720, 556 kb/s, 30 fps, 30 tbr, 15360 tbn (default)
+  Duration: 00:00:08.87, start: 0.000000, bitrate: 642 kb/s
+  Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 720x1280 [SAR 1:1 DAR 9:16], 574 kb/s, 30 fps, 30 tbr, 15360 tbn (default)
     Metadata:
       handler_name    : VideoHandler
       encoder         : AVC Coding
-  Stream #0:1[0x2](und): Audio: aac (HE-AAC) (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 41 kb/s (default)
+  Stream #0:1[0x2](und): Audio: aac (HE-AAC) (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 64 kb/s (default)
     Metadata:
       handler_name    : SoundHandler
-Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'http://127.0.0.1:8000/media/6241a958aba14b6ca080c898fd1b7c5c.mp4':
+Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'http://127.0.0.1:8000/media/5df894d8c0404186824aeb632919369a.mp4':
   Metadata:
     major_brand     : isom
     minor_version   : 512
     compatible_brands: isomiso2avc1mp41
-  Duration: 00:00:12.00, start: 0.000000, bitrate: 1139 kb/s
-  Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 720x1280, 1082 kb/s, 30 fps, 30 tbr, 15360 tbn (default)
+  Duration: 00:00:27.31, start: 0.000000, bitrate: 562 kb/s
+  Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 480x854 [SAR 1:1 DAR 240:427], 496 kb/s, 30 fps, 30 tbr, 15360 tbn (default)
     Metadata:
       handler_name    : VideoHandler
       encoder         : AVC Coding
-  Stream #0:1[0x2](und): Audio: aac (HE-AAC) (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 58 kb/s (default)
+  Stream #0:1[0x2](und): Audio: aac (HE-AAC) (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 61 kb/s (default)
     Metadata:
       handler_name    : SoundHandler
-[http @ 00000229CB75D740] HTTP error 403 Forbidden
-[mov,mp4,m4a,3gp,3g2,mj2 @ 00000229989D5880] stream 0, offset 0x1ca9: partial file
-[mov,mp4,m4a,3gp,3g2,mj2 @ 00000229989D5080] stream 0, offset 0x2b0a: partial file
+Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'http://127.0.0.1:8000/media/5df894d8c0404186824aeb632919369a.mp4':
+  Metadata:
+    major_brand     : isom
+    minor_version   : 512
+    compatible_brands: isomiso2avc1mp41
+  Duration: 00:00:27.31, start: 0.000000, bitrate: 562 kb/s
+  Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 480x854 [SAR 1:1 DAR 240:427], 496 kb/s, 30 fps, 30 tbr, 15360 tbn (default)
+    Metadata:
+      handler_name    : VideoHandler
+      encoder         : AVC Coding
+  Stream #0:1[0x2](und): Audio: aac (HE-AAC) (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 61 kb/s (default)
+    Metadata:
+      handler_name    : SoundHandler
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000274583E7840] stream 0, offset 0xc56b: partial file
+Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'http://127.0.0.1:8000/media/1755801c44474961bffd070554134500.mp4':
+  Metadata:
+    major_brand     : isom
+    minor_version   : 512
+    compatible_brands: isomiso2avc1mp41
+  Duration: 00:00:10.66, start: 0.000000, bitrate: 3615 kb/s
+  Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 720x1280, 3587 kb/s, 30 fps, 30 tbr, 15360 tbn (default)
+    Metadata:
+      handler_name    : VideoHandler
+      encoder         : AVC Coding
+  Stream #0:1[0x2](und): Audio: aac (HE-AAC) (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 61 kb/s (default)
+    Metadata:
+      handler_name    : SoundHandler
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000274583E47C0] stream 0, offset 0x210f: partial file
+Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'http://127.0.0.1:8000/media/f85dc4fdcbff4c598e9f15b5e14ec5bf.mp4':
+  Metadata:
+    major_brand     : isom
+    minor_version   : 512
+    compatible_brands: isomiso2avc1mp41
+  Duration: 00:00:34.73, start: 0.000000, bitrate: 2049 kb/s
+  Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 720x1280, 1988 kb/s, 30 fps, 30 tbr, 15360 tbn (default)
+    Metadata:
+      handler_name    : VideoHandler
+      encoder         : AVC Coding
+  Stream #0:1[0x2](und): Audio: aac (HE-AAC) (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 59 kb/s (default)
+    Metadata:
+      handler_name    : SoundHandler
+Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'http://127.0.0.1:8000/media/baad123e5143447f81775ef26de4877f.mp4':
+  Metadata:
+    major_brand     : isom
+    minor_version   : 512
+    compatible_brands: isomiso2avc1mp41
+  Duration: 00:00:22.82, start: 0.000000, bitrate: 1192 kb/s
+  Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 720x1280, 1129 kb/s, 24 fps, 24 tbr, 12288 tbn (default)
+    Metadata:
+      handler_name    : VideoHandler
+      encoder         : AVC Coding
+  Stream #0:1[0x2](und): Audio: aac (HE-AAC) (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 64 kb/s (default)
+    Metadata:
+      handler_name    : SoundHandler
+Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'http://127.0.0.1:8000/media/885c383a56644b9db19061774b42f692.mp4':
+  Metadata:
+    major_brand     : isom
+    minor_version   : 512
+    compatible_brands: isomiso2avc1mp41
+  Duration: 00:00:08.19, start: 0.000000, bitrate: 992 kb/s
+  Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 720x1280 [SAR 1:1 DAR 9:16], 941 kb/s, 30 fps, 30 tbr, 15360 tbn (default)
+    Metadata:
+      handler_name    : VideoHandler
+      encoder         : AVC Coding
+  Stream #0:1[0x2](und): Audio: aac (HE-AAC) (mp4a / 0x6134706D), 44100 Hz, stereo, fltp, 54 kb/s (default)
+    Metadata:
+      handler_name    : SoundHandler
+[http @ 00000274126BFD00] HTTP error 403 Forbidden
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000274583E7580] stream 0, offset 0x73e6: partial file
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000274583E6580] stream 0, offset 0x1edf: partial file
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000274583E6580] stream 0, offset 0x1edf: partial file
+[http @ 000002746ABBCCC0] HTTP error 403 Forbidden
+[mov,mp4,m4a,3gp,3g2,mj2 @ 00000274583E7040] stream 0, offset 0x3aa6: partial file
