@@ -1,4 +1,4 @@
-Library: D:\Major project\Game\TileQuest_Wellness\Temp\BurstOutput\Data\Plugins\x86_64\lib_burst_generated
+Library: D:\Major project\Game\UnderTide\Temp\BurstOutput\Data\Plugins\x86_64\lib_burst_generated
 --platform=Windows
 --minimum-os-version=
 --backend=burst-llvm-19
@@ -10,10 +10,10 @@ Library: D:\Major project\Game\TileQuest_Wellness\Temp\BurstOutput\Data\Plugins\
 --target-framework=NetFramework
 --linker-options=PdbAltPath="Platformer_Wellness_Data/Plugins/x86_64/lib_burst_generated.pdb"
 --generate-link-xml=Temp\burst.link.xml
---temp-folder=D:\Major project\Game\TileQuest_Wellness\Temp\Burst
+--temp-folder=D:\Major project\Game\UnderTide\Temp\Burst
 --key-folder=D:/unity/6000.0.54f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport
---decode-folder=D:\Major project\Game\TileQuest_Wellness\Library\Burst
---output=D:\Major project\Game\TileQuest_Wellness\Temp\BurstOutput\Data\Plugins\x86_64\lib_burst_generated
+--decode-folder=D:\Major project\Game\UnderTide\Library\Burst
+--output=D:\Major project\Game\UnderTide\Temp\BurstOutput\Data\Plugins\x86_64\lib_burst_generated
 --pdb-search-paths=Temp/ManagedSymbols/
 
 --method=UnityEngine.Rendering.GPUResidentDrawerBurst, Unity.RenderPipelines.GPUDriven.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null::ClassifyMaterials(Unity.Collections.NativeArray`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]&, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeParallelHashMap`2+ReadOnly[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[UnityEngine.Rendering.BatchMaterialID, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]&, Unity.Collections, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeList`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]&, Unity.Collections, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeList`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]&, Unity.Collections, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeList`1[[UnityEngine.Rendering.GPUDrivenPackedMaterialData, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]&, Unity.Collections, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null)--f259e9421b556600f769263137cdc7bc
@@ -127,10 +127,10 @@ Library: D:\Major project\Game\TileQuest_Wellness\Temp\BurstOutput\Data\Plugins\
 --target-framework=NetFramework
 --linker-options=PdbAltPath="Platformer_Wellness_Data/Plugins/x86_64/lib_burst_generated.pdb"
 --generate-link-xml=Temp\burst.link.xml
---temp-folder=D:\Major project\Game\TileQuest_Wellness\Temp\Burst
+--temp-folder=D:\Major project\Game\UnderTide\Temp\Burst
 --key-folder=D:/unity/6000.0.54f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport
---decode-folder=D:\Major project\Game\TileQuest_Wellness\Library\Burst
---output=D:\Major project\Game\TileQuest_Wellness\Temp\BurstOutput\Data\Plugins\x86_64\lib_burst_generated
+--decode-folder=D:\Major project\Game\UnderTide\Library\Burst
+--output=D:\Major project\Game\UnderTide\Temp\BurstOutput\Data\Plugins\x86_64\lib_burst_generated
 --pdb-search-paths=Temp/ManagedSymbols/
 
 --method=UnityEngine.Rendering.GPUResidentDrawerBurst, Unity.RenderPipelines.GPUDriven.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null::ClassifyMaterials(Unity.Collections.NativeArray`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]&, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeParallelHashMap`2+ReadOnly[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[UnityEngine.Rendering.BatchMaterialID, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]&, Unity.Collections, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeList`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]&, Unity.Collections, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeList`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]&, Unity.Collections, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeList`1[[UnityEngine.Rendering.GPUDrivenPackedMaterialData, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]&, Unity.Collections, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null)--f259e9421b556600f769263137cdc7bc
@@ -246,10 +246,10 @@ Library: D:\Major project\Game\TileQuest_Wellness\Temp\BurstOutput\Data\Plugins\
 --float-mode=Fast
 --linker-options=PdbAltPath="Platformer_Wellness_Data/Plugins/x86_64/lib_burst_generated.pdb"
 --generate-link-xml=Temp\burst.link.xml
---temp-folder=D:\Major project\Game\TileQuest_Wellness\Temp\Burst
+--temp-folder=D:\Major project\Game\UnderTide\Temp\Burst
 --key-folder=D:/unity/6000.0.54f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport
---decode-folder=D:\Major project\Game\TileQuest_Wellness\Library\Burst
---output=D:\Major project\Game\TileQuest_Wellness\Temp\BurstOutput\Data\Plugins\x86_64\lib_burst_generated
+--decode-folder=D:\Major project\Game\UnderTide\Library\Burst
+--output=D:\Major project\Game\UnderTide\Temp\BurstOutput\Data\Plugins\x86_64\lib_burst_generated
 --pdb-search-paths=Temp/ManagedSymbols/
 
 --method=Unity.Jobs.IJobForExtensions+ForJobStruct`1[[UnityEngine.Rendering.Universal.ZBinningJob, Unity.RenderPipelines.Universal.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]], UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.Universal.ZBinningJob&, Unity.RenderPipelines.Universal.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|System.IntPtr, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089|System.IntPtr, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089)--77fc393cb521ac129b1392d4eb94d29a
@@ -267,10 +267,10 @@ Library: D:\Major project\Game\TileQuest_Wellness\Temp\BurstOutput\Data\Plugins\
 --float-mode=Fast
 --linker-options=PdbAltPath="Platformer_Wellness_Data/Plugins/x86_64/lib_burst_generated.pdb"
 --generate-link-xml=Temp\burst.link.xml
---temp-folder=D:\Major project\Game\TileQuest_Wellness\Temp\Burst
+--temp-folder=D:\Major project\Game\UnderTide\Temp\Burst
 --key-folder=D:/unity/6000.0.54f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport
---decode-folder=D:\Major project\Game\TileQuest_Wellness\Library\Burst
---output=D:\Major project\Game\TileQuest_Wellness\Temp\BurstOutput\Data\Plugins\x86_64\lib_burst_generated
+--decode-folder=D:\Major project\Game\UnderTide\Library\Burst
+--output=D:\Major project\Game\UnderTide\Temp\BurstOutput\Data\Plugins\x86_64\lib_burst_generated
 --pdb-search-paths=Temp/ManagedSymbols/
 
 --method=Unity.Jobs.IJobForExtensions+ForJobStruct`1[[UnityEngine.Rendering.Universal.ZBinningJob, Unity.RenderPipelines.Universal.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]], UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.Universal.ZBinningJob&, Unity.RenderPipelines.Universal.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|System.IntPtr, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089|System.IntPtr, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089)--77fc393cb521ac129b1392d4eb94d29a
@@ -286,10 +286,10 @@ Library: D:\Major project\Game\TileQuest_Wellness\Temp\BurstOutput\Data\Plugins\
 --target-framework=NetFramework
 --linker-options=PdbAltPath="Platformer_Wellness_Data/Plugins/x86_64/lib_burst_generated.pdb"
 --generate-link-xml=Temp\burst.link.xml
---temp-folder=D:\Major project\Game\TileQuest_Wellness\Temp\Burst
+--temp-folder=D:\Major project\Game\UnderTide\Temp\Burst
 --key-folder=D:/unity/6000.0.54f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport
---decode-folder=D:\Major project\Game\TileQuest_Wellness\Library\Burst
---output=D:\Major project\Game\TileQuest_Wellness\Temp\BurstOutput\Data\Plugins\x86_64\lib_burst_generated
+--decode-folder=D:\Major project\Game\UnderTide\Library\Burst
+--output=D:\Major project\Game\UnderTide\Temp\BurstOutput\Data\Plugins\x86_64\lib_burst_generated
 --pdb-search-paths=Temp/ManagedSymbols/
 
 --method=UnityEngine.Rendering.Universal.ShadowUtility, Unity.RenderPipelines.Universal.2D.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null::GetVertexReferenceStats(Unity.Collections.NativeArray`1[[UnityEngine.Vector3, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[UnityEngine.Rendering.Universal.ShadowEdge, Unity.RenderPipelines.Universal.2D.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089|System.Boolean&, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089|System.Int32&, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089|Unity.Collections.NativeArray`1[[UnityEngine.Rendering.Universal.ShadowUtility+RemappingInfo, Unity.RenderPipelines.Universal.2D.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null)--988a40d3aa93620eb189303886118f02
@@ -315,10 +315,10 @@ Library: D:\Major project\Game\TileQuest_Wellness\Temp\BurstOutput\Data\Plugins\
 --target-framework=NetFramework
 --linker-options=PdbAltPath="Platformer_Wellness_Data/Plugins/x86_64/lib_burst_generated.pdb"
 --generate-link-xml=Temp\burst.link.xml
---temp-folder=D:\Major project\Game\TileQuest_Wellness\Temp\Burst
+--temp-folder=D:\Major project\Game\UnderTide\Temp\Burst
 --key-folder=D:/unity/6000.0.54f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport
---decode-folder=D:\Major project\Game\TileQuest_Wellness\Library\Burst
---output=D:\Major project\Game\TileQuest_Wellness\Temp\BurstOutput\Data\Plugins\x86_64\lib_burst_generated
+--decode-folder=D:\Major project\Game\UnderTide\Library\Burst
+--output=D:\Major project\Game\UnderTide\Temp\BurstOutput\Data\Plugins\x86_64\lib_burst_generated
 --pdb-search-paths=Temp/ManagedSymbols/
 
 --method=UnityEngine.Rendering.Universal.ShadowUtility, Unity.RenderPipelines.Universal.2D.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null::GetVertexReferenceStats(Unity.Collections.NativeArray`1[[UnityEngine.Vector3, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[UnityEngine.Rendering.Universal.ShadowEdge, Unity.RenderPipelines.Universal.2D.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null|System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089|System.Boolean&, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089|System.Int32&, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089|Unity.Collections.NativeArray`1[[UnityEngine.Rendering.Universal.ShadowUtility+RemappingInfo, Unity.RenderPipelines.Universal.2D.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null)--988a40d3aa93620eb189303886118f02
