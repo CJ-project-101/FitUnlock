@@ -195,4 +195,10 @@ public class AurethBoss : MonoBehaviour
     {
         anim.SetTrigger("hurt");
     }
+
+    public void ReceiveBoulderHit(float damage)
+    {
+        GetComponent<Health>().TakeDamage(damage);
+        Debug.Log("Aureth hit by boulder for " + damage);
+    }
 }

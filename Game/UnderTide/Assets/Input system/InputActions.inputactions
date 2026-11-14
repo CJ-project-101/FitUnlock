@@ -50,6 +50,33 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "Interact",
+                    "type": "Button",
+                    "id": "1b4d2086-5092-4690-93c6-3fb6f6d30e25",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "TestHeavy",
+                    "type": "Button",
+                    "id": "934a8217-3d2e-4c73-94ba-a4ef483270f0",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "TestMagic",
+                    "type": "Button",
+                    "id": "e55c7a1d-8168-49e0-93c0-fdd1d6fa0477",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -187,6 +214,17 @@
                 },
                 {
                     "name": "",
+                    "id": "3404388f-c559-4e86-b3e6-c2de082cd588",
+                    "path": "",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Move",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "c1f7a91b-d0fd-4a62-997e-7fb9b69bf235",
                     "path": "<Gamepad>/rightStick",
                     "interactions": "",
@@ -308,6 +346,17 @@
                 },
                 {
                     "name": "",
+                    "id": "f9bece83-f089-4d2b-91d7-a775b4b72110",
+                    "path": "<Gamepad>/buttonSouth",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Gamepad",
+                    "action": "Jump",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "9bca039d-8f63-4443-8aff-40615207d845",
                     "path": "<Mouse>/rightButton",
                     "interactions": "",
@@ -325,6 +374,50 @@
                     "processors": "",
                     "groups": ";Gamepad",
                     "action": "FireUp",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "fed1d0c9-9ce6-44cc-b413-9fdb8638d9f8",
+                    "path": "<Keyboard>/e",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Keyboard&Mouse",
+                    "action": "Interact",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "2571b94a-fb86-46e2-aa8a-9daa2f340c57",
+                    "path": "<Gamepad>/buttonWest",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Gamepad",
+                    "action": "Interact",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "b17e0b43-5e90-404d-9b55-4dd2579dec49",
+                    "path": "<Keyboard>/h",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Keyboard&Mouse",
+                    "action": "TestHeavy",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "96ff9e0d-ad1c-418d-90cd-f40d36286326",
+                    "path": "<Keyboard>/m",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "TestMagic",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

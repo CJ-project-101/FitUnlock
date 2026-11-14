@@ -68,7 +68,12 @@ public class PlayerMovement : MonoBehaviour
 
     void Run()
     {
-        Vector2 playerVelocity = new Vector2(moveInput.x * runSpeed, myRigidbody.linearVelocity.y);
+        float speedMultiplier = 1f;
+        BoulderCarrier carrier = GetComponent<BoulderCarrier>();
+        if (carrier != null && carrier.IsCarrying)
+            speedMultiplier = carrier.CarrySpeedMultiplier;
+
+        Vector2 playerVelocity = new Vector2(moveInput.x * runSpeed * speedMultiplier, myRigidbody.linearVelocity.y);
         myRigidbody.linearVelocity = playerVelocity;
 
         bool playerHasHorizontalSpeed = Mathf.Abs(myRigidbody.linearVelocity.x) > Mathf.Epsilon;
