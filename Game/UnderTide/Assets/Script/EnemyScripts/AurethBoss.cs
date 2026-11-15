@@ -4,201 +4,110 @@ using System.Collections;
 public class AurethBoss : MonoBehaviour
 {
     [Header("References")]
-    [SerializeField] Animator anim;
-    [SerializeField] Transform player;
-    [SerializeField] Health bossHealth;
+    [SerializeField] private Animator anim;
+    [SerializeField] private Health health;
 
-    [Header("Movement")]
-    [SerializeField] float moveSpeed = 3f;
-    [SerializeField] float chaseRange = 8f;
-    [SerializeField] float attackRange = 1.5f;
+    [Header("Stamina")]
+    [SerializeField] private float maxStamina = 100f;
+    private float currentStamina;
 
-    [Header("Attack Prefabs / Points")]
-    [SerializeField] Transform castPoint;
-    [SerializeField] GameObject fireballPrefab;
-    [SerializeField] GameObject dashWindVFX;
-    [SerializeField] GameObject explosionVFX;
+    [Header("Stamina Costs")]
+    [SerializeField] private float heavyAttackStaminaCost = 20f;
+    [SerializeField] private float magicCastStaminaCost = 15f;
+    [SerializeField] private float chaseStaminaDrainPerSecond = 5f;
+    [SerializeField] private float blockStaminaCost = 15f;
 
-    [Header("Timing")]
-    [SerializeField] float decisionCooldown = 1.5f;
-    [SerializeField] float dashSpeed = 12f;
-    [SerializeField] float dizzyDuration = 2f;
+    [Header("Block")]
+    [Range(0f, 1f)]
+    [SerializeField] private float blockChance = 0.5f;
 
-    int phase = 0;
-    bool busy = false;      // true while performing an attack animation
-    bool phaseLocked = false;
-    float decisionTimer = 0f;
+    [Header("Dizzy")]
+    [SerializeField] private float dizzyDuration = 3f;
+    private bool isDizzy = false;
 
-    Rigidbody2D rb;
+    private bool isChasing = false;
 
-    void Awake()
+    public bool IsDizzy => isDizzy;
+    public float CurrentStamina => currentStamina;
+    public float MaxStamina => maxStamina;
+
+    private void Awake()
     {
-        rb = GetComponent<Rigidbody2D>();
+        if (anim == null) anim = GetComponent<Animator>();
+        if (health == null) health = GetComponent<Health>();
+        currentStamina = maxStamina;
     }
 
-    void Update()
+    private void Update()
     {
-        if (busy || phaseLocked) return;
+        if (isChasing && !isDizzy)
+            DrainStamina(chaseStaminaDrainPerSecond * Time.deltaTime);
+    }
 
-        CheckPhaseTransition();
+    public void SetChasing(bool chasing)
+    {
+        isChasing = chasing;
+    }
 
-        float distance = Vector2.Distance(transform.position, player.position);
-        FaceTarget();
+    public void OnHeavyAttackPerformed()
+    {
+        DrainStamina(heavyAttackStaminaCost);
+    }
 
-        decisionTimer -= Time.deltaTime;
+    public void OnMagicCastPerformed()
+    {
+        DrainStamina(magicCastStaminaCost);
+    }
 
-        if (distance > chaseRange)
+    // Called by Boulder.cs when a thrown boulder hits Aureth
+    public void ReceiveBoulderHit(float damage)
+    {
+        if (isDizzy)
         {
-            anim.SetBool("isWalking", false);
-            return; // out of range, idle
+            // Guaranteed hit during dizzy window
+            health.TakeDamage(damage);
+            return;
         }
 
-        if (distance > attackRange)
+        if (Random.value <= blockChance)
         {
-            // Chase
-            anim.SetBool("isWalking", true);
-            Vector2 dir = (player.position - transform.position).normalized;
-            rb.linearVelocity = new Vector2(dir.x * moveSpeed, rb.linearVelocity.y);
+            // Successful block
+            DrainStamina(blockStaminaCost);
+            if (anim != null) anim.SetTrigger("block");
         }
         else
         {
-            anim.SetBool("isWalking", false);
-            rb.linearVelocity = Vector2.zero;
-
-            if (decisionTimer <= 0f)
-            {
-                decisionTimer = decisionCooldown;
-                ChooseAttack(distance);
-            }
+            // Failed block — boulder connects directly
+            health.TakeDamage(damage);
         }
     }
 
-    void FaceTarget()
+    private void DrainStamina(float amount)
     {
-        float dir = Mathf.Sign(player.position.x - transform.position.x);
-        transform.localScale = new Vector3(Mathf.Abs(transform.localScale.x) * dir,
-            transform.localScale.y, transform.localScale.z);
+        if (isDizzy) return;
+
+        currentStamina = Mathf.Max(0f, currentStamina - amount);
+
+        if (currentStamina <= 0f)
+            StartCoroutine(EnterDizzy());
     }
 
-    void ChooseAttack(float distance)
+    private IEnumerator EnterDizzy()
     {
-        int choice;
+        isDizzy = true;
+        isChasing = false;
 
-        if (phase == 0)
-            choice = Random.Range(0, 2); // Attack, Strike
-        else if (phase == 1)
-            choice = Random.Range(0, 4); // + Cast, Dash
-        else
-            choice = Random.Range(0, 5); // + JumpAttack
-
-        switch (choice)
-        {
-            case 0: StartCoroutine(DoAttack()); break;
-            case 1: StartCoroutine(DoStrike()); break;
-            case 2: StartCoroutine(DoCast()); break;
-            case 3: StartCoroutine(DoDash()); break;
-            case 4: StartCoroutine(DoJumpAttack()); break;
-        }
-    }
-
-    IEnumerator DoAttack()
-    {
-        busy = true;
-        anim.SetTrigger("attack");
-        yield return new WaitForSeconds(0.6f); // match animation length
-        busy = false;
-    }
-
-    IEnumerator DoStrike()
-    {
-        busy = true;
-        anim.SetTrigger("strike");
-        yield return new WaitForSeconds(0.9f); // slower, heavier telegraph
-        busy = false;
-    }
-
-    IEnumerator DoCast()
-    {
-        busy = true;
-        anim.SetTrigger("cast");
-        yield return new WaitForSeconds(0.5f); // windup before firing
-        FireProjectile();
-        yield return new WaitForSeconds(0.4f);
-        busy = false;
-    }
-
-    void FireProjectile()
-    {
-        if (fireballPrefab == null || castPoint == null) return;
-        GameObject fb = Instantiate(fireballPrefab, castPoint.position, Quaternion.identity);
-        float dir = Mathf.Sign(transform.localScale.x);
-        //fb.GetComponent<Projectile>()?.SetDirection(dir);
-    }
-
-    IEnumerator DoDash()
-    {
-        busy = true;
-        anim.SetTrigger("dash");
-        if (dashWindVFX != null) Instantiate(dashWindVFX, transform.position, Quaternion.identity);
-
-        float dir = Mathf.Sign(player.position.x - transform.position.x);
-        float timer = 0f;
-        while (timer < 0.4f)
-        {
-            rb.linearVelocity = new Vector2(dir * dashSpeed, rb.linearVelocity.y);
-            timer += Time.deltaTime;
-            yield return null;
-        }
-        rb.linearVelocity = Vector2.zero;
-        yield return new WaitForSeconds(0.3f);
-        busy = false;
-    }
-
-    IEnumerator DoJumpAttack()
-    {
-        busy = true;
-        anim.SetTrigger("jumpAttack");
-        yield return new WaitForSeconds(0.5f); // airtime before slam
-        if (explosionVFX != null) Instantiate(explosionVFX, transform.position, Quaternion.identity);
-        // TODO: trigger a shockwave hitbox here that the player must jump over
-        yield return new WaitForSeconds(0.5f);
-        busy = false;
-    }
-
-    void CheckPhaseTransition()
-    {
-        float healthPercent = bossHealth.currentHealth / bossHealth.MaxHealth;
-
-        if (phase == 0 && healthPercent <= 0.66f)
-            StartCoroutine(PhaseTransition(1));
-        else if (phase == 1 && healthPercent <= 0.33f)
-            StartCoroutine(PhaseTransition(2));
-    }
-
-    IEnumerator PhaseTransition(int newPhase)
-    {
-        phaseLocked = true;
-        busy = true;
-        rb.linearVelocity = Vector2.zero;
-        anim.SetTrigger("dizzy"); // exposed window — player gets a free punish
+        if (anim != null) anim.SetTrigger("dizzy");
 
         yield return new WaitForSeconds(dizzyDuration);
 
-        phase = newPhase;
-        decisionCooldown = Mathf.Max(0.8f, decisionCooldown - 0.3f); // ramps up aggression each phase
-        busy = false;
-        phaseLocked = false;
+        isDizzy = false;
+        currentStamina = maxStamina; // refill after recovering, so he isn't instantly dizzy again
     }
 
-    // Called by an Animation Event on the Hurt clip, or externally
-    public void OnHit()
+    // Public reset for use later in Phase 8 (teleport)
+    public void ResetStamina()
     {
-        anim.SetTrigger("hurt");
-    }
-
-    public void ReceiveBoulderHit(float damage)
-    {
-        GetComponent<Health>().TakeDamage(damage);
-        Debug.Log("Aureth hit by boulder for " + damage);
+        currentStamina = maxStamina;
     }
 }

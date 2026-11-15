@@ -4,16 +4,19 @@ using UnityEngine.InputSystem;
 public class WallTestTrigger : MonoBehaviour
 {
     [SerializeField] private DestructibleWall testWall;
+    [SerializeField] private AurethBoss testBoss;
 
     void OnTestHeavy(InputValue value)
     {
-        if (value.isPressed)
-            testWall.OnHeavyAttackHit();
+        if (!value.isPressed) return;
+        testWall.OnHeavyAttackHit();
+        testBoss.OnHeavyAttackPerformed();
     }
 
     void OnTestMagic(InputValue value)
     {
-        if (value.isPressed)
-            testWall.OnMagicHit();
+        if (!value.isPressed) return;
+        testWall.OnMagicHit();
+        testBoss.OnMagicCastPerformed();
     }
 }
