@@ -203,3 +203,5 @@ MonoBehaviour:
   explosionRadius: 1.5
   explosionDamage: 1
   explosionVFXPrefab: {fileID: 3990669821445720845, guid: 2698a104c7150804199108971cb9d652, type: 3}
+  explosionYOffset: 0.5
+  explosionXOffset: 0.71

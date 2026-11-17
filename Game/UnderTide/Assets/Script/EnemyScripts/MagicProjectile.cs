@@ -7,20 +7,29 @@ public class MagicProjectile : MonoBehaviour
     [SerializeField] private float explosionRadius = 1.5f;
     [SerializeField] private float explosionDamage = 1f;
     [SerializeField] private GameObject explosionVFXPrefab;
+    [Header("VFX")]
+    [SerializeField] private float explosionYOffset = 0.3f;
+    [SerializeField] private float explosionXOffset = 0.3f;
 
+    private SpriteRenderer spriteRenderer;
     private Vector3 startPos;
     private float direction;
     private bool exploded = false;
+
+    private void Awake()
+    {
+        spriteRenderer = GetComponent<SpriteRenderer>();
+    }
 
     public void Launch(float dir)
     {
         direction = dir;
         startPos = transform.position;
 
-        float localScaleX = transform.localScale.x;
-        if (Mathf.Sign(localScaleX) != dir)
-            localScaleX = -localScaleX;
-        transform.localScale = new Vector3(localScaleX, transform.localScale.y, transform.localScale.z);
+        // dir > 0 means moving right, so flipX should be false (assuming sprite's
+        // default unflipped art faces right). Flip when moving left.
+        if (spriteRenderer != null)
+            spriteRenderer.flipX = dir > 0;
     }
 
     private void Update()
@@ -58,7 +67,6 @@ public class MagicProjectile : MonoBehaviour
     {
         exploded = true;
 
-        // Damage anyone caught in the blast radius, even if not the direct hit
         Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, explosionRadius);
         foreach (Collider2D hit in hits)
         {
@@ -70,11 +78,13 @@ public class MagicProjectile : MonoBehaviour
             }
         }
 
+        Vector3 explosionPos = transform.position
+            + Vector3.up * explosionYOffset
+            + Vector3.right * direction * explosionXOffset;
+
         if (explosionVFXPrefab != null)
-            Instantiate(explosionVFXPrefab, transform.position, Quaternion.identity);
+            Instantiate(explosionVFXPrefab, explosionPos, Quaternion.identity);
 
         Destroy(gameObject);
     }
-
-    
 }
