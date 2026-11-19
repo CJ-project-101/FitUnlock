@@ -1,6 +1,3 @@
-INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
-D:\Major project\venv\Lib\site-packages\google\protobuf\symbol_database.py:55: UserWarning: SymbolDatabase.GetPrototype() is deprecated. Please use message_factory.GetMessageClass() instead. SymbolDatabase.GetPrototype() will be removed soon.
-  warnings.warn('SymbolDatabase.GetPrototype() is deprecated. Please '
 ==================================================
   FitPlay - Starting Up
 ==================================================
@@ -8,22 +5,104 @@ D:\Major project\venv\Lib\site-packages\google\protobuf\symbol_database.py:55: U
 [session.py] Active session locked. Bank preserved.
 [main.py] Saved login found - skipping login screen.
 [main.py] Starting Qt event loop...
-
-[PUSH-UPS] Target: 10 reps.  Lie sideways to camera.
-Press Q to quit early.
-
-  Push-up rep 1 ✓
-  Push-up rep 2 ✓
-  Push-up rep 3 ✓
-  Push-up rep 4 ✓
-  Liveness check failed - set rejected.
-[session.py] Play session: 3343 sec. Bank left: 0 sec
-[main.py] Launching game: D:\Major project\unity_build\Platformer_Wellness.exe
-[ui.py] Game closed - bringing FitPlay back.
-[session.py] Play session: 3343 sec. Bank left: 0 sec
-[main.py] Launching game: D:\Major project\unity_build\Platformer_Wellness.exe
-[main.py] Another launch asked FitPlay to come forward.
-[session.py] Play session: 3305 sec. Bank left: 0 sec
+[main.py] Logging out.
+[leaderboard] fetch rejected: 403 [{
+  "error": {
+    "code": 403,
+    "message": "Missing or insufficient permissions.",
+    "status": "PERMISSION_DENIED"
+  }
+}
+]
+[leaderboard] fetch rejected: 403 [{
+  "error": {
+    "code": 403,
+    "message": "Missing or insufficient permissions.",
+    "status": "PERMISSION_DENIED"
+  }
+}
+]
+[leaderboard] fetch rejected: 403 [{
+  "error": {
+    "code": 403,
+    "message": "Missing or insufficient permissions.",
+    "status": "PERMISSION_DENIED"
+  }
+}
+]
+[leaderboard] fetch rejected: 403 [{
+  "error": {
+    "code": 403,
+    "message": "Missing or insufficient permissions.",
+    "status": "PERMISSION_DENIED"
+  }
+}
+]
+[leaderboard] fetch rejected: 403 [{
+  "error": {
+    "code": 403,
+    "message": "Missing or insufficient permissions.",
+    "status": "PERMISSION_DENIED"
+  }
+}
+]
+[leaderboard] fetch rejected: 403 [{
+  "error": {
+    "code": 403,
+    "message": "Missing or insufficient permissions.",
+    "status": "PERMISSION_DENIED"
+  }
+}
+]
+[leaderboard] fetch rejected: 403 [{
+  "error": {
+    "code": 403,
+    "message": "Missing or insufficient permissions.",
+    "status": "PERMISSION_DENIED"
+  }
+}
+]
+[leaderboard] fetch rejected: 403 [{
+  "error": {
+    "code": 403,
+    "message": "Missing or insufficient permissions.",
+    "status": "PERMISSION_DENIED"
+  }
+}
+]
+[leaderboard] fetch rejected: 403 [{
+  "error": {
+    "code": 403,
+    "message": "Missing or insufficient permissions.",
+    "status": "PERMISSION_DENIED"
+  }
+}
+]
+[leaderboard] fetch rejected: 403 [{
+  "error": {
+    "code": 403,
+    "message": "Missing or insufficient permissions.",
+    "status": "PERMISSION_DENIED"
+  }
+}
+]
+[leaderboard] fetch rejected: 403 [{
+  "error": {
+    "code": 403,
+    "message": "Missing or insufficient permissions.",
+    "status": "PERMISSION_DENIED"
+  }
+}
+]
+[leaderboard] fetch rejected: 403 [{
+  "error": {
+    "code": 403,
+    "message": "Missing or insufficient permissions.",
+    "status": "PERMISSION_DENIED"
+  }
+}
+]
+[session.py] Play session: 1846 sec. Bank left: 0 sec
 [main.py] Launching game: D:\Major project\unity_build\Platformer_Wellness.exe
 [ui.py] Game closed - bringing FitPlay back.
 [main.py] FitPlay closing.

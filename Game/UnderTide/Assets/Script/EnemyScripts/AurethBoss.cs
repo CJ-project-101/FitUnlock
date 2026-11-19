@@ -70,6 +70,10 @@ public class AurethBoss : MonoBehaviour
     [Header("Dizzy")]
     [SerializeField] private float dizzyDuration = 3f;
 
+    [Header("Wall-Strike Stun")]
+    [SerializeField] private float wallStuckDuration = 1f;    // how long he stays vulnerable after crashing into a wall
+    private bool isStuckInWall = false;
+
     [Header("Strike Dash")]
     [SerializeField] private float strikeWindup = 0.25f;       // pause before dashing (match the anticipation frames)
     [SerializeField] private float strikeDashSpeed = 14f;      // how swift the dash is
@@ -83,6 +87,7 @@ public class AurethBoss : MonoBehaviour
     private float decisionTimer = 0f;
 
     public bool IsDizzy => isDizzy;
+    public bool IsStuckInWall => isStuckInWall;
     public float CurrentStamina => currentStamina;
     public float MaxStamina => maxStamina;
 
@@ -97,7 +102,7 @@ public class AurethBoss : MonoBehaviour
 
     private void Update()
     {
-        if (isDizzy || busy) return;
+        if (isDizzy || busy || isStuckInWall) return;
 
         if (!IsPlayerBetweenEdges())
         {
@@ -231,6 +236,7 @@ public class AurethBoss : MonoBehaviour
         float startX = transform.position.x;
         float dashDistance = heavyBoxOffset.x + heavyBoxSize.x * 0.5f;
         bool hitPlayer = false;
+        bool crashedIntoWall = false;
         float timer = 0f;
 
         while (Mathf.Abs(transform.position.x - startX) < dashDistance && timer < strikeMaxDashTime)
@@ -250,11 +256,12 @@ public class AurethBoss : MonoBehaviour
                 }
             }
 
-            // Crashed into a wall or pillar: count it, stop the dash
+            // Crashed into a wall or pillar: count it, stop the dash, get stuck
             Collider2D wall = Physics2D.OverlapBox(center, strikeHitSize, 0f, wallLayer);
             if (wall != null)
             {
                 wall.GetComponent<DestructibleWall>()?.OnHeavyAttackHit();
+                crashedIntoWall = true;
                 break;
             }
 
@@ -269,9 +276,30 @@ public class AurethBoss : MonoBehaviour
             yield return new WaitForFixedUpdate();
         }
 
-        // 3. Stop and recover
+        // 3. Stop, then either get stuck in the wall or recover normally
         rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
+
+        if (crashedIntoWall)
+        {
+            // StuckInWall releases "busy" when it finishes
+            yield return StartCoroutine(StuckInWall());
+            yield break;
+        }
+
         yield return new WaitForSeconds(strikeRecovery);
+        busy = false;
+    }
+
+    private IEnumerator StuckInWall()
+    {
+        isStuckInWall = true;
+        rb.linearVelocity = Vector2.zero;
+
+        if (anim != null) anim.SetTrigger("dizzy"); // reusing dizzy as the "stuck" visual for now
+
+        yield return new WaitForSeconds(wallStuckDuration);
+
+        isStuckInWall = false;
         busy = false;
     }
 
@@ -335,7 +363,8 @@ public class AurethBoss : MonoBehaviour
 
     public void ReceiveBoulderHit(float damage)
     {
-        if (isDizzy)
+        // Guaranteed hit while dizzy or stuck in a wall
+        if (isDizzy || isStuckInWall)
         {
             health.TakeDamage(damage);
             return;
